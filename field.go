@@ -3,6 +3,7 @@ package argparse
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -115,6 +116,41 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 
 	str = fmt.Sprintf("%*v%-*v%*v", margin, "", pending+size, option, margin, strings.TrimSpace(help))
 	str = strings.TrimRight(str, " \t\n")
+	return
+}
+
+func (field *Field) SetValue(args ...string) (size int, err error) {
+	size = 1
+	switch field.Value.Kind() {
+	case reflect.Bool:
+		// toggle the boolean
+		field.Value.SetBool(!field.Value.Interface().(bool))
+	case reflect.Int:
+		// override the integer
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass %v", TYPE_INT)
+			return
+		}
+
+		var val int
+		if val, err = strconv.Atoi(args[0]); err != nil {
+			err = fmt.Errorf("should pass %v: %v", TYPE_INT, args[0])
+			return
+		}
+
+		field.Value.SetInt(int64(val))
+		size++
+	case reflect.String:
+		// override the string
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass %v", TYPE_STRING)
+			return
+		}
+
+		field.Value.SetString(args[0])
+		size++
+	}
+
 	return
 }
 

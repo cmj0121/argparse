@@ -110,6 +110,27 @@ func (parser *ArgParse) Run() (err error) {
 
 func (parser *ArgParse) Parse(args ...string) (err error) {
 	Log(INFO, "parse %#v", args)
+
+	for idx, size := 0, 0; idx < len(args); idx += size {
+		token := args[idx]
+		switch {
+		case len(token) > 2 && token[:2] == "--":
+			for _, field := range parser.options {
+				if field.Name == token[2:] {
+					// set the value
+					if size, err = field.SetValue(args[idx+1:]...); err != nil {
+						// cannot set the value, raise
+						err = fmt.Errorf("%v %v", token, err)
+						return
+					}
+					break
+				}
+			}
+		default:
+			err = fmt.Errorf("cannot parse the token: %v", token)
+			return
+		}
+	}
 	return
 }
 
