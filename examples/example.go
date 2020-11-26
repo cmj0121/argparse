@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/cmj0121/argparse"
@@ -24,12 +23,12 @@ type Foo struct {
 
 	// the option can be set repeatedly by-default
 	Switch   bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
-	Count    int    `short:"C" help:"save as the integer"`
-	Name     string `name:"user-name" help:"save the username"`
+	Count    int    `short:"計" help:"save as the integer"`
+	Name     string `name:"姓名" help:"save the username"`
 	Password string `args:"password"`
 
 	// the pass argument
-	Bind    *string `help:"pass the bind HOST:IP"`
+	Bind    *string `name:"綁定" help:"pass the bind HOST:IP"`
 	Timeout *int
 	SubInner
 
@@ -44,6 +43,5 @@ func main() {
 		Count:  12,
 		Bind:   &bind,
 	}
-	argparse.MustNew(&foo).Run()
-	fmt.Printf("%#v\n", foo)
+	argparse.MustNew(&foo).HelpMessage(nil)
 }

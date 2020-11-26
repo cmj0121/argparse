@@ -99,7 +99,8 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 		if field.Shortcut != rune(0) {
 			shortcut := fmt.Sprintf("-%v %v", string(field.Shortcut), field.TypeHint)
 			shortcut = fmt.Sprintf("%v, ", strings.TrimSpace(shortcut))
-			option = fmt.Sprintf("%*v--%v %v", pending, shortcut, field.Name, field.TypeHint)
+			shift := len(shortcut) - WidecharSize(shortcut)
+			option = fmt.Sprintf("%*v--%v %v", pending-shift, shortcut, field.Name, field.TypeHint)
 		}
 	}
 
@@ -114,7 +115,8 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 		}
 	}
 
-	str = fmt.Sprintf("%*v%-*v%*v", margin, "", pending+size, option, margin, strings.TrimSpace(help))
+	shift := len(option) - WidecharSize(option)
+	str = fmt.Sprintf("%*v%-*v%*v", margin, "", pending+size-shift, option, margin, strings.TrimSpace(help))
 	str = strings.TrimRight(str, " \t\n")
 	return
 }
