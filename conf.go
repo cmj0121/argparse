@@ -8,7 +8,15 @@ const (
 	MACRO     = 0
 )
 
+// type hint of the field
 const (
+	TYPE_INT    = "INT"
+	TYPE_STRING = "STR"
+)
+
+// default key tag and value used when parse *Struct
+const (
+	TAG_IGNORE = "-"
 	// the reserved key used in the structure
 	TAG_RESERVED_KEY = "args"
 	TAG_SHORTCUT     = "short"
@@ -16,4 +24,11 @@ const (
 	TAG_HELP         = "help"
 	// the reserved key used in TAG_KEY
 	KEY_PASSWORD = "password"
+)
+
+// the default formatted string config
+const (
+	FMT_MARGIN  = 4
+	FMT_PENDING = 8
+	FMT_SIZE    = 24
 )

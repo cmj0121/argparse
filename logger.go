@@ -48,7 +48,7 @@ func Log(lv LogLevel, msg string, args ...interface{}) {
 	}
 }
 
-func NewLog(log *log.Logger) {
+func SetLogger(log *log.Logger) {
 	logger = log
 	return
 }
