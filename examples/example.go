@@ -22,11 +22,10 @@ type Foo struct {
 	_      [8]byte `pending byte`
 
 	// the option can be set repeatedly by-default
-	Switch                        bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
-	Count                         int    `short:"C" help:"save as the integer"`
-	Name                          string `name:"user-name" help:"save the username"`
-	Password                      string `args:"password"`
-	TheFuckingLog0123456789ABCDEF int
+	Switch   bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
+	Count    int    `short:"C" help:"save as the integer"`
+	Name     string `name:"user-name" help:"save the username"`
+	Password string `args:"password"`
 
 	// the pass argument
 	Bind    *string `help:"pass the bind HOST:IP"`
@@ -38,9 +37,11 @@ type Foo struct {
 }
 
 func main() {
+	bind := ":9999"
 	foo := Foo{
 		Switch: true,
 		Count:  12,
+		Bind:   &bind,
 	}
 	argparse.MustNew(&foo).HelpMessage(nil)
 }

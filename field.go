@@ -105,7 +105,12 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 	help := fmt.Sprintf("%v", field.Help)
 	if field.Value.IsValid() && !field.Value.IsZero() {
 		// set the default value
-		help = fmt.Sprintf("%v (default: %v)", field.Help, field.Value.Interface())
+		switch field.FieldType {
+		case ARGUMENT:
+			help = fmt.Sprintf("%v (default: %v)", field.Help, field.Value.Elem().Interface())
+		default:
+			help = fmt.Sprintf("%v (default: %v)", field.Help, field.Value.Interface())
+		}
 	}
 
 	str = fmt.Sprintf("%*v%-*v%*v", margin, "", pending+size, option, margin, strings.TrimSpace(help))
