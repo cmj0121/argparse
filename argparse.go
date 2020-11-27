@@ -34,10 +34,11 @@ func New(in interface{}) (parser *ArgParse, err error) {
 	name = strings.ToLower(name)
 
 	parser = &ArgParse{
-		Value:     value,
-		Name:      name,
-		Stderr:    os.Stderr,
-		callbacks: map[string]Callback{},
+		Value:               value,
+		Name:                name,
+		Stderr:              os.Stderr,
+		DisabledUnknwonFlag: true,
+		callbacks:           map[string]Callback{},
 	}
 
 	// process the field
@@ -72,7 +73,8 @@ type ArgParse struct {
 	reflect.Value
 
 	// the program name for the parser, default is the name of passed structure as lowercase
-	Name string
+	Name                string
+	DisabledUnknwonFlag bool
 
 	// the field in the argparse
 	options     []*Field
@@ -141,32 +143,68 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 
 	for idx, size := 0, 0; idx < len(args); idx += size {
 		token := args[idx]
+
+		Log(DEBUG, "parse #%-2d %v", idx, token)
+	PROCESS_FIELD:
 		switch {
 		case len(token) > 2 && token[:2] == "--":
 			for _, field := range parser.options {
 				if field.Name == token[2:] {
 					// set the value
-					if size, err = field.SetValue(args[idx+1:]...); err != nil {
+					if size, err = field.SetValue(parser, args[idx+1:]...); err != nil {
 						// cannot set the value, raise
 						err = fmt.Errorf("%v %v", token, err)
 						return
 					}
 
-					if fn, ok := parser.callbacks[field.Callback]; ok {
-						Log(DEBUG, "try execute %v", field.Callback)
-						// trigger the callback
-						if fn(parser) {
-							// set the exit when return true
-							Log(INFO, "exit when call %v", field.Callback)
-							os.Exit(0)
-						}
-					}
-
-					break
+					break PROCESS_FIELD
 				}
 			}
+
+			if parser.DisabledUnknwonFlag {
+				err = fmt.Errorf("unknown option: %v", token)
+				return
+			}
+		case len(token) > 1 && token[:1] == "-":
+			Log(DEBUG, "shortcut: %v (%d)", token[1:], WidecharSize(token[1:]))
+
+			switch {
+			case WidecharSize(token[1:]) == 1 || (WidecharSize(token[1:]) == 2 && len(token[1:]) > 2):
+				shortcut := []rune(token[1:])[0]
+
+				for _, field := range parser.options {
+					if field.Shortcut == shortcut {
+						if size, err = field.SetValue(parser, args[idx+1:]...); err != nil {
+							// cannot set the value, raise
+							err = fmt.Errorf("%v %v", token, err)
+							return
+						}
+
+						break PROCESS_FIELD
+					}
+				}
+			default:
+				for _, shortcut := range token[1:] {
+					for _, field := range parser.options {
+						if field.Shortcut == shortcut {
+							if size, err = field.SetValue(parser); err != nil {
+								// cannot set the value, raise
+								err = fmt.Errorf("%v %v", token, err)
+								return
+							}
+
+							break PROCESS_FIELD
+						}
+					}
+				}
+			}
+
+			if parser.DisabledUnknwonFlag {
+				err = fmt.Errorf("unknown option: %v", token)
+				return
+			}
 		default:
-			err = fmt.Errorf("cannot parse the token: %v", token)
+			err = fmt.Errorf("unknown argument: %v", token)
 			return
 		}
 	}

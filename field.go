@@ -2,6 +2,7 @@ package argparse
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -138,7 +139,7 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 	return
 }
 
-func (field *Field) SetValue(args ...string) (size int, err error) {
+func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err error) {
 	size = 1
 	switch field.Value.Kind() {
 	case reflect.Bool:
@@ -168,6 +169,16 @@ func (field *Field) SetValue(args ...string) (size int, err error) {
 
 		field.Value.SetString(args[0])
 		size++
+	}
+
+	if fn, ok := parser.callbacks[field.Callback]; ok {
+		Log(DEBUG, "try execute %v", field.Callback)
+		// trigger the callback
+		if fn(parser) {
+			// set the exit when return true
+			Log(INFO, "exit when call %v", field.Callback)
+			os.Exit(0)
+		}
 	}
 
 	return
