@@ -64,6 +64,7 @@ func New(in interface{}) (parser *ArgParse, err error) {
 
 	// set the default callback
 	parser.callbacks[FN_HELP] = parser.defaultHelpMessage
+	parser.callbacks[FN_VERSION] = parser.defaultVersionMessage
 
 	return
 }

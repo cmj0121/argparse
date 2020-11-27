@@ -16,7 +16,7 @@ type SubInner struct {
 }
 
 type Foo struct {
-	argparse.Help
+	argparse.Model
 
 	// the ignore field that will not be processed
 	Ignore bool `-`

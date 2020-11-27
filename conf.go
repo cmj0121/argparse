@@ -26,7 +26,8 @@ const (
 	// the reserved key used in TAG_KEY
 	KEY_PASSWORD = "password"
 	// default callback KEY
-	FN_HELP = "_help"
+	FN_HELP    = "_help"
+	FN_VERSION = "_version"
 )
 
 // the default formatted string config
