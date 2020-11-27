@@ -34,9 +34,10 @@ func New(in interface{}) (parser *ArgParse, err error) {
 	name = strings.ToLower(name)
 
 	parser = &ArgParse{
-		Value:  value,
-		Name:   name,
-		Stderr: os.Stderr,
+		Value:     value,
+		Name:      name,
+		Stderr:    os.Stderr,
+		callbacks: map[string]Callback{},
 	}
 
 	// process the field
@@ -53,33 +54,15 @@ func New(in interface{}) (parser *ArgParse, err error) {
 			continue
 		}
 
-		var new_field *Field
-		switch {
-		case field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct:
-			Log(DEBUG, "#%-2d field %-12v is sub-command", idx, field.Name)
-			if new_field, err = NewField(v, field, SUBCOMMAND); err != nil {
-				err = fmt.Errorf("cannot process %v.%v: %v", typ.Name(), field.Name, err)
-				return
-			}
-			parser.subcommands = append(parser.subcommands, new_field)
-		case field.Type.Kind() == reflect.Ptr:
-			Log(DEBUG, "#%-2d field %-12v is argument", idx, field.Name)
-			if new_field, err = NewField(v, field, ARGUMENT); err != nil {
-				err = fmt.Errorf("cannot process %v.%v: %v", typ.Name(), field.Name, err)
-				return
-			}
-			parser.arguments = append(parser.arguments, new_field)
-		default:
-			Log(DEBUG, "#%-2d field %-12v is option", idx, field.Name)
-			if new_field, err = NewField(v, field, OPTION); err != nil {
-				err = fmt.Errorf("cannot process %v.%v: %v", typ.Name(), field.Name, err)
-				return
-			}
-			parser.options = append(parser.options, new_field)
+		Log(DEBUG, "#%-2d field %-12v", idx, field.Name)
+		if err = parser.setField(v, field); err != nil {
+			err = fmt.Errorf("cannot processed %v.%v: %v", typ.Name(), field.Name, err)
+			return
 		}
-
-		Log(INFO, "add new field: %v", new_field)
 	}
+
+	// set the default callback
+	parser.callbacks[FN_HELP] = parser.defaultHelpMessage
 
 	return
 }
@@ -96,8 +79,53 @@ type ArgParse struct {
 	arguments   []*Field
 	subcommands []*Field
 
+	// the callback when option triggered
+	callbacks map[string]Callback
+
 	// IO for show the help message
 	Stderr io.StringWriter
+}
+
+func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (err error) {
+	var new_field *Field
+
+	switch {
+	case field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct:
+		if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
+			return
+		}
+		parser.subcommands = append(parser.subcommands, new_field)
+	case field.Type.Kind() == reflect.Ptr:
+		if new_field, err = NewField(val, field, ARGUMENT); err != nil {
+			return
+		}
+		parser.arguments = append(parser.arguments, new_field)
+	case field.Anonymous:
+		// embedded field
+		err = fmt.Errorf("not support embedded field")
+		for idx := 0; idx < field.Type.NumField(); idx++ {
+			v := val.Field(idx)
+
+			if !v.CanSet() || strings.TrimSpace(string(field.Tag)) == TAG_IGNORE {
+				// the field will not be processed, skip
+				Log(INFO, "#%-2d field %-12v skip", idx, field.Name)
+				continue
+			}
+
+			if err = parser.setField(v, field.Type.Field(idx)); err != nil {
+				err = fmt.Errorf("set %v.%v: %v", field.Name, field.Type.Field(idx).Name, err)
+				return
+			}
+		}
+	default:
+		if new_field, err = NewField(val, field, OPTION); err != nil {
+			return
+		}
+		parser.options = append(parser.options, new_field)
+	}
+
+	Log(INFO, "add new field: %v", new_field)
+	return
 }
 
 func (parser *ArgParse) Run() (err error) {
@@ -123,6 +151,17 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 						err = fmt.Errorf("%v %v", token, err)
 						return
 					}
+
+					if fn, ok := parser.callbacks[field.Callback]; ok {
+						Log(DEBUG, "try execute %v", field.Callback)
+						// trigger the callback
+						if fn(parser) {
+							// set the exit when return true
+							Log(INFO, "exit when call %v", field.Callback)
+							os.Exit(0)
+						}
+					}
+
 					break
 				}
 			}

@@ -8,6 +8,8 @@ type Inner struct {
 }
 
 type Foo struct {
+	Help
+
 	// the ignore field that will not be processed
 	Ignore bool `-`
 	ignore bool
@@ -35,7 +37,7 @@ func ExampleArgParse() {
 	parser := MustNew(&foo)
 	// show the message on the STDOUT, for testing
 	parser.Stderr = os.Stdout
-	parser.HelpMessage(nil)
+	parser.Parse("--help")
 	// Output:
 	// usage: foo [OPTION] ARGUMENT
 	//

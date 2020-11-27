@@ -31,6 +31,9 @@ type Field struct {
 	TypeHint string
 	Shortcut rune
 	Help     string
+
+	Callback     string
+	DefaultValue interface{}
 }
 
 func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (field *Field, err error) {
@@ -63,6 +66,11 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		field.Help = help
 	}
 
+	if callback := field.StructTag.Get(TAG_CALLBACK); callback != "" {
+		// set the callback name
+		field.Callback = callback
+	}
+
 	typ := field.Type
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
@@ -73,6 +81,15 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		field.TypeHint = TYPE_INT
 	case reflect.String:
 		field.TypeHint = TYPE_STRING
+	}
+
+	if field.Value.IsValid() && !field.Value.IsZero() {
+		switch field.FieldType {
+		case ARGUMENT:
+			field.DefaultValue = field.Value.Elem().Interface()
+		default:
+			field.DefaultValue = field.Value.Interface()
+		}
 	}
 
 	return
@@ -105,13 +122,13 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 	}
 
 	help := fmt.Sprintf("%v", field.Help)
-	if field.Value.IsValid() && !field.Value.IsZero() {
+	if field.DefaultValue != nil {
 		// set the default value
 		switch field.FieldType {
 		case ARGUMENT:
-			help = fmt.Sprintf("%v (default: %v)", field.Help, field.Value.Elem().Interface())
+			help = fmt.Sprintf("%v (default: %v)", field.Help, field.DefaultValue)
 		default:
-			help = fmt.Sprintf("%v (default: %v)", field.Help, field.Value.Interface())
+			help = fmt.Sprintf("%v (default: %v)", field.Help, field.DefaultValue)
 		}
 	}
 

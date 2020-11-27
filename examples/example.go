@@ -16,6 +16,8 @@ type SubInner struct {
 }
 
 type Foo struct {
+	argparse.Help
+
 	// the ignore field that will not be processed
 	Ignore bool `-`
 	ignore bool
@@ -43,5 +45,5 @@ func main() {
 		Count:  12,
 		Bind:   &bind,
 	}
-	argparse.MustNew(&foo).HelpMessage(nil)
+	argparse.MustNew(&foo).Run()
 }

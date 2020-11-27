@@ -22,8 +22,11 @@ const (
 	TAG_SHORTCUT     = "short"
 	TAG_NAME         = "name"
 	TAG_HELP         = "help"
+	TAG_CALLBACK     = "callback"
 	// the reserved key used in TAG_KEY
 	KEY_PASSWORD = "password"
+	// default callback KEY
+	FN_HELP = "_help"
 )
 
 // the default formatted string config
