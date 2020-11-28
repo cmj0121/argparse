@@ -186,6 +186,7 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 				}
 			default:
 				for _, shortcut := range token[1:] {
+					found := false
 					for _, field := range parser.options {
 						if field.Shortcut == shortcut {
 							if size, err = field.SetValue(parser); err != nil {
@@ -193,11 +194,16 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 								err = fmt.Errorf("%v %v", token, err)
 								return
 							}
-
-							break PROCESS_FIELD
+							found = true
 						}
 					}
+
+					if !found {
+						err = fmt.Errorf("unknown option: -%v", string(shortcut))
+						return
+					}
 				}
+				break PROCESS_FIELD
 			}
 
 			if parser.DisabledUnknwonFlag {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cmj0121/argparse"
@@ -46,4 +47,5 @@ func main() {
 		Bind:   &bind,
 	}
 	argparse.MustNew(&foo).Run()
+	fmt.Printf("%#v\n", foo)
 }
