@@ -211,6 +211,21 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 				return
 			}
 		default:
+			for _, field := range parser.arguments {
+				if field.BeenSet {
+					Log(INFO, "field %v already set %v, skip", field.Name, field.Value)
+					continue
+				}
+
+				if size, err = field.SetValue(parser, args[idx:]...); err != nil {
+					// cannot set the value, raise
+					err = fmt.Errorf("%v %v", token, err)
+					return
+				}
+
+				break PROCESS_FIELD
+			}
+
 			err = fmt.Errorf("unknown argument: %v", token)
 			return
 		}
@@ -295,9 +310,9 @@ func (parser *ArgParse) usage() (str string) {
 		str = fmt.Sprintf("%v [OPTION]", str)
 	}
 
-	if len(parser.arguments) > 0 || len(parser.subcommands) > 0 {
-		// add the command
-		str = fmt.Sprintf("%v ARGUMENT", str)
+	// add the command
+	for _, field := range parser.arguments {
+		str = fmt.Sprintf("%v [%v]", str, strings.ToUpper(field.Name))
 	}
 
 	return

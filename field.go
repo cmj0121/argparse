@@ -27,6 +27,9 @@ type Field struct {
 	// the field type
 	FieldType
 
+	// set flag
+	BeenSet bool
+
 	// the display field
 	Name     string
 	TypeHint string
@@ -48,6 +51,11 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 	if field.Name = strings.ToLower(sfield.Name); field.StructTag.Get(TAG_NAME) != "" {
 		field.Name = strings.ToLower(field.StructTag.Get(TAG_NAME))
 		field.Name = strings.TrimSpace(field.Name)
+	}
+
+	if ftyp == ARGUMENT {
+		// set the display as the upper-case
+		field.Name = strings.ToUpper(field.Name)
 	}
 
 	if s := field.StructTag.Get(TAG_SHORTCUT); s != "" {
@@ -141,10 +149,52 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 
 func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err error) {
 	size = 1
-	switch field.Value.Kind() {
+	switch kind := field.Value.Kind(); kind {
+	case reflect.Bool, reflect.Int, reflect.String:
+		// the basic setter
+		if size, err = field.setValue(field.Value, args...); err != nil {
+			return
+		}
+	case reflect.Ptr:
+		Log(DEBUG, "set pointer %v: %v", field.Name, field.Value)
+
+		if field.Value.IsNil() {
+			Log(INFO, "nil pointer, new instance: %v", field.Value.Type())
+
+			obj := reflect.New(field.Value.Type().Elem())
+			field.Value.Set(obj)
+		}
+
+		if size, err = field.setValue(field.Value.Elem(), args...); err != nil {
+			return
+		}
+	default:
+		Log(WARN, "not implemented set field kind: %v", kind)
+		err = fmt.Errorf("not support field: %v", field.Name)
+		return
+	}
+
+	if fn, ok := parser.callbacks[field.Callback]; ok {
+		Log(DEBUG, "try execute %v", field.Callback)
+		// trigger the callback
+		if fn(parser) {
+			// set the exit when return true
+			Log(INFO, "exit when call %v", field.Callback)
+			os.Exit(0)
+		}
+	}
+
+	field.BeenSet = true
+	return
+}
+
+func (field *Field) setValue(value reflect.Value, args ...string) (size int, err error) {
+	size = 1
+
+	switch kind := value.Kind(); kind {
 	case reflect.Bool:
 		// toggle the boolean
-		field.Value.SetBool(!field.Value.Interface().(bool))
+		value.SetBool(!value.Interface().(bool))
 	case reflect.Int:
 		// override the integer
 		if len(args) == 0 {
@@ -158,7 +208,7 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 			return
 		}
 
-		field.Value.SetInt(int64(val))
+		value.SetInt(int64(val))
 		size++
 	case reflect.String:
 		// override the string
@@ -167,20 +217,11 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 			return
 		}
 
-		field.Value.SetString(args[0])
+		value.SetString(args[0])
 		size++
 	}
 
-	if fn, ok := parser.callbacks[field.Callback]; ok {
-		Log(DEBUG, "try execute %v", field.Callback)
-		// trigger the callback
-		if fn(parser) {
-			// set the exit when return true
-			Log(INFO, "exit when call %v", field.Callback)
-			os.Exit(0)
-		}
-	}
-
+	Log(INFO, "success set %v", value)
 	return
 }
 

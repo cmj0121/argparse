@@ -40,11 +40,9 @@ type Foo struct {
 }
 
 func main() {
-	bind := ":9999"
 	foo := Foo{
 		Switch: true,
 		Count:  12,
-		Bind:   &bind,
 	}
 	argparse.MustNew(&foo).Run()
 	fmt.Printf("%#v\n", foo)
