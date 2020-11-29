@@ -76,19 +76,20 @@ func Example() {
 	parser := MustNew(&foo)
 	// show the message on the STDOUT, for testing
 	parser.Stderr = os.Stdout
-	parser.Parse("--help")
+	parser.HelpMessage(nil)
 	// Output:
-	// usage: foo [OPTION] ARGUMENT
+	// usage: foo [OPTION] [BIND] [TIMEOUT]
 	//
 	// option:
+	//         -h, --help                  show this message
 	//         -s, --toggle                toggle the boolean value
 	//     -C INT, --count INT             save as the integer (default: 12)
 	//             --user-name STR         (default: user)
 	//             --password STR
 	//
 	// argument:
-	//     bind                            pass the bind HOST:IP
-	//     timeout
+	//     BIND                            pass the bind HOST:IP
+	//     TIMEOUT
 	//
 	// sub-command:
 	//     inner                           sub-command
