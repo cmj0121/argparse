@@ -194,6 +194,9 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 		if size, err = field.setValue(field.Value.Elem(), args...); err != nil {
 			return
 		}
+
+		// HACK - override the used args as 1
+		size = 1
 	default:
 		switch {
 		case field.Value.Type() == reflect.TypeOf(time.Time{}):
@@ -211,7 +214,6 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 				return
 			}
 			field.Value.Set(reflect.ValueOf(timestamp))
-			size++
 		default:
 			Log(WARN, "not implemented set field kind: %v (%v)", kind, field.Value.Type())
 			err = fmt.Errorf("not support field: %v", field.Name)
@@ -254,9 +256,12 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			return
 		}
 
-		if len(field.Choices) > 0 && field.Choices[sort.SearchStrings(field.Choices, args[0])] != args[0] {
-			err = fmt.Errorf("%v should choice from %v", args[0], field.Choices)
-			return
+		if len(field.Choices) > 0 {
+			idx := sort.SearchStrings(field.Choices, args[0])
+			if idx == len(field.Choices) || field.Choices[idx] != args[0] {
+				err = fmt.Errorf("%v should choice from %v", args[0], field.Choices)
+				return
+			}
 		}
 
 		value.SetInt(int64(val))
@@ -268,9 +273,12 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			return
 		}
 
-		if len(field.Choices) > 0 && field.Choices[sort.SearchStrings(field.Choices, args[0])] != args[0] {
-			err = fmt.Errorf("%v should choice from %v", args[0], field.Choices)
-			return
+		if len(field.Choices) > 0 {
+			idx := sort.SearchStrings(field.Choices, args[0])
+			if idx == len(field.Choices) || field.Choices[idx] != args[0] {
+				err = fmt.Errorf("%v should choice from %v", args[0], field.Choices)
+				return
+			}
 		}
 
 		value.SetString(args[0])
