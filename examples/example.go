@@ -29,11 +29,12 @@ type Foo struct {
 	Switch   bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
 	Count    int    `short:"計" help:"save as the integer"`
 	Name     string `name:"姓名" help:"save the username"`
+	Cases    string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 	Password string `args:"password"`
 
 	// the pass argument
 	Bind    *string `name:"綁定" help:"pass the bind HOST:IP"`
-	Timeout *int
+	Timeout *int    `choices:"1 12 123"`
 	SubInner
 
 	// the subcommand command
@@ -44,7 +45,9 @@ func main() {
 	foo := Foo{
 		Switch: true,
 		Count:  12,
+		Cases:  "foo",
 	}
-	argparse.MustNew(&foo).Run()
-	fmt.Printf("%#v\n", foo)
+	if err := argparse.MustNew(&foo).Run(); err == nil {
+		fmt.Printf("%#v\n", foo)
+	}
 }

@@ -20,6 +20,7 @@ type Foo struct {
 	Switch   bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
 	Count    int    `short:"C" help:"save as the integer"`
 	Name     string `name:"user-name"`
+	Cases    string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 	Password string `args:"password"`
 
 	// the pass argument
@@ -85,6 +86,7 @@ func Example() {
 	//         -s, --toggle                toggle the boolean value
 	//     -C INT, --count INT             save as the integer (default: 12)
 	//             --user-name STR         (default: user)
+	//     -c STR, --cases STR             choice from fix possible [demo foo]
 	//             --password STR
 	//
 	// argument:

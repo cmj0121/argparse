@@ -219,7 +219,7 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 
 				if size, err = field.SetValue(parser, args[idx:]...); err != nil {
 					// cannot set the value, raise
-					err = fmt.Errorf("%v %v", token, err)
+					err = fmt.Errorf("%v %v", field.Name, err)
 					return
 				}
 
