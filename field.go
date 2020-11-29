@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // the field in the argparse which may be 1) option, 2) argument and 3) sub-command
@@ -169,9 +170,28 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 			return
 		}
 	default:
-		Log(WARN, "not implemented set field kind: %v", kind)
-		err = fmt.Errorf("not support field: %v", field.Name)
-		return
+		switch {
+		case field.Value.Type() == reflect.TypeOf(time.Time{}):
+			if len(args) == 0 {
+				err = fmt.Errorf("should pass TIME: RFC-3339 (%v)", time.RFC3339)
+				return
+			}
+
+			Log(INFO, "set time.Time as %v", args[0])
+			var timestamp time.Time
+
+			if timestamp, err = time.Parse(time.RFC3339, args[0]); err != nil {
+				err = fmt.Errorf("should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
+				Log(INFO, "should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
+				return
+			}
+			field.Value.Set(reflect.ValueOf(timestamp))
+			size++
+		default:
+			Log(WARN, "not implemented set field kind: %v (%v)", kind, field.Value.Type())
+			err = fmt.Errorf("not support field: %v", field.Name)
+			return
+		}
 	}
 
 	if fn, ok := parser.callbacks[field.Callback]; ok {
@@ -185,6 +205,7 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 	}
 
 	field.BeenSet = true
+	Log(INFO, "set %v as %v", field.Name, field.Value)
 	return
 }
 

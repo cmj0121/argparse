@@ -12,8 +12,9 @@ type Inner struct {
 }
 
 type SubInner struct {
-	X int
-	Y byte
+	X   int
+	Y   byte
+	Now time.Time `help:"timestamp"`
 }
 
 type Foo struct {
