@@ -30,6 +30,16 @@ type Foo struct {
 	InnerX `help:"embedded and should not be display"`
 }
 
+type WrongConf1 struct {
+	X bool `short:"a"`
+	Y bool `short:"a"`
+}
+
+type WrongConf2 struct {
+	X bool `name:"a"`
+	Y bool `name:"a"`
+}
+
 func TestArgParse(t *testing.T) {
 	foo := Foo{
 		Count: 12,
@@ -65,6 +75,16 @@ func TestArgParse(t *testing.T) {
 		t.Fatalf(":9999 not work: %v (%v)", foo.Bind, err)
 	} else if err := parser.Parse("98765"); err != nil || foo.Timeout == nil || *foo.Timeout != 98765 {
 		t.Fatalf("98765 not work: %v (%v)", foo.Timeout, err)
+	}
+}
+
+func TestArgParseDuplicatedShortcut(t *testing.T) {
+	if _, err := New(&WrongConf1{}); err == nil {
+		t.Fatalf("expect %v should be wrong to generate: %v", WrongConf1{}, err)
+	}
+
+	if _, err := New(&WrongConf2{}); err == nil {
+		t.Fatalf("expect %v should be wrong to generate: %v", WrongConf2{}, err)
 	}
 }
 

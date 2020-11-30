@@ -39,6 +39,10 @@ func New(in interface{}) (parser *ArgParse, err error) {
 		Stderr:              os.Stderr,
 		DisabledUnknwonFlag: true,
 		callbacks:           map[string]Callback{},
+
+		used_option:     map[string]*Field{},
+		used_shortcut:   map[rune]*Field{},
+		used_subcommand: map[string]*Field{},
 	}
 
 	// process the field
@@ -81,6 +85,11 @@ type ArgParse struct {
 	arguments   []*Field
 	subcommands []*Field
 
+	// the cache for the used options
+	used_option     map[string]*Field
+	used_shortcut   map[rune]*Field
+	used_subcommand map[string]*Field
+
 	// the callback when option triggered
 	callbacks map[string]Callback
 
@@ -96,6 +105,12 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 		if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
 			return
 		}
+
+		if _, ok := parser.used_subcommand[new_field.Name]; ok {
+			err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
+			return
+		}
+		parser.used_subcommand[new_field.Name] = new_field
 		parser.subcommands = append(parser.subcommands, new_field)
 	case field.Type.Kind() == reflect.Ptr:
 		if new_field, err = NewField(val, field, ARGUMENT); err != nil {
@@ -124,6 +139,21 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 		if new_field, err = NewField(val, field, OPTION); err != nil {
 			return
 		}
+
+		if _, ok := parser.used_option["--"+new_field.Name]; ok {
+			err = fmt.Errorf("duplicated option --%v", new_field.Name)
+			return
+		}
+		parser.used_option["--"+new_field.Name] = new_field
+
+		if new_field.Shortcut != rune(0) {
+			if _, ok := parser.used_option["-"+string(new_field.Shortcut)]; ok {
+				err = fmt.Errorf("duplicated option -%v", string(new_field.Shortcut))
+				return
+			}
+			parser.used_option["-"+string(new_field.Shortcut)] = new_field
+		}
+
 		parser.options = append(parser.options, new_field)
 	}
 
