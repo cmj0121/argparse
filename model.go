@@ -22,13 +22,13 @@ type Version struct {
 }
 
 // show the help message and exit
-func (parser *ArgParse) defaultHelpMessage(in *ArgParse) (exit bool) {
-	parser.HelpMessage(nil)
+func defaultHelpMessage(in *ArgParse) (exit bool) {
+	in.HelpMessage(nil)
 	exit = true
 	return
 }
 
-func (parser *ArgParse) defaultVersionMessage(in *ArgParse) (exit bool) {
+func defaultVersionMessage(in *ArgParse) (exit bool) {
 	os.Stdout.WriteString(fmt.Sprintf("%v (v%d.%d.%d)\n", PROJ_NAME, MAJOR, MINOR, MACRO))
 	exit = true
 	return

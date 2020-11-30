@@ -39,7 +39,6 @@ func New(in interface{}) (parser *ArgParse, err error) {
 		Stderr:              os.Stderr,
 		DisabledUnknwonFlag: true,
 		ExitOnCallback:      true,
-		callbacks:           map[string]Callback{},
 
 		used_option:     map[string]*Field{},
 		used_shortcut:   map[rune]*Field{},
@@ -67,8 +66,8 @@ func New(in interface{}) (parser *ArgParse, err error) {
 	}
 
 	// set the default callback
-	parser.callbacks[FN_HELP] = parser.defaultHelpMessage
-	parser.callbacks[FN_VERSION] = parser.defaultVersionMessage
+	RegisterCallback(FN_HELP, defaultHelpMessage)
+	RegisterCallback(FN_VERSION, defaultVersionMessage)
 
 	return
 }
@@ -91,9 +90,6 @@ type ArgParse struct {
 	used_option     map[string]*Field
 	used_shortcut   map[rune]*Field
 	used_subcommand map[string]*Field
-
-	// the callback when option triggered
-	callbacks map[string]Callback
 
 	// IO for show the help message
 	Stderr io.StringWriter
