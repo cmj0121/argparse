@@ -4,8 +4,8 @@ package argparse
 const (
 	PROJ_NAME = "argparse"
 	MAJOR     = 0
-	MINOR     = 3
-	MACRO     = 1
+	MINOR     = 4
+	MACRO     = 0
 )
 
 // type hint of the field

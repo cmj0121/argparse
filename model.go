@@ -21,6 +21,12 @@ type Version struct {
 	ShowVersion bool `short:"v" name:"version" help:"show argparse version" callback:"_version"`
 }
 
+func init() {
+	// set the default callback
+	RegisterCallback(FN_HELP, defaultHelpMessage)
+	RegisterCallback(FN_VERSION, defaultVersionMessage)
+}
+
 // show the help message and exit
 func defaultHelpMessage(in *ArgParse) (exit bool) {
 	in.HelpMessage(nil)

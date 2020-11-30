@@ -65,10 +65,6 @@ func New(in interface{}) (parser *ArgParse, err error) {
 		}
 	}
 
-	// set the default callback
-	RegisterCallback(FN_HELP, defaultHelpMessage)
-	RegisterCallback(FN_VERSION, defaultVersionMessage)
-
 	return
 }
 
@@ -153,6 +149,11 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 		}
 
 		parser.options = append(parser.options, new_field)
+	}
+
+	if new_field != nil && new_field.Callback != "" && GetCallback(parser.Value, new_field.Callback) == nil {
+		err = fmt.Errorf("callback %v not defined", new_field.Callback)
+		return
 	}
 
 	Log(INFO, "add new field: %v", new_field)
