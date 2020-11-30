@@ -5,7 +5,12 @@ import (
 	"testing"
 )
 
-type Inner struct {
+type InnerX struct {
+	InnerHide bool `-`
+	Inner     bool
+	// the pass argument
+	Bind    *string `help:"pass the bind HOST:IP"`
+	Timeout *int
 }
 
 type Foo struct {
@@ -17,18 +22,12 @@ type Foo struct {
 	_      [8]byte `pending byte`
 
 	// the option can be set repeatedly by-default
-	Switch   bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
-	Count    int    `short:"C" help:"save as the integer"`
-	Name     string `name:"user-name"`
-	Cases    string `short:"c" choices:"demo foo" help:"choice from fix possible"`
-	Password string `args:"password"`
+	Switch bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
+	Count  int    `short:"C" help:"save as the integer"`
+	Name   string `name:"user-name"`
+	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 
-	// the pass argument
-	Bind    *string `help:"pass the bind HOST:IP"`
-	Timeout *int
-
-	// the subcommand command
-	*Inner `help:"sub-command"`
+	InnerX `help:"embedded and should not be display"`
 }
 
 func TestArgParse(t *testing.T) {
@@ -87,12 +86,9 @@ func Example() {
 	//     -C INT, --count INT             save as the integer (default: 12)
 	//             --user-name STR         (default: user)
 	//     -c STR, --cases STR             choice from fix possible [demo foo]
-	//             --password STR
+	//             --inner
 	//
 	// argument:
 	//     BIND                            pass the bind HOST:IP
 	//     TIMEOUT
-	//
-	// sub-command:
-	//     inner                           sub-command
 }

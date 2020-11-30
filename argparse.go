@@ -55,7 +55,6 @@ func New(in interface{}) (parser *ArgParse, err error) {
 			continue
 		}
 
-		Log(DEBUG, "#%-2d field %-12v", idx, field.Name)
 		if err = parser.setField(v, field); err != nil {
 			err = fmt.Errorf("cannot processed %v.%v: %v", typ.Name(), field.Name, err)
 			return
@@ -104,19 +103,20 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 		}
 		parser.arguments = append(parser.arguments, new_field)
 	case field.Anonymous:
+		Log(INFO, "set anonymous field: %v", field.Name)
 		// embedded field
-		err = fmt.Errorf("not support embedded field")
 		for idx := 0; idx < field.Type.NumField(); idx++ {
 			v := val.Field(idx)
 
-			if !v.CanSet() || strings.TrimSpace(string(field.Tag)) == TAG_IGNORE {
+			sub_field := field.Type.Field(idx)
+			if !v.CanSet() || strings.TrimSpace(string(sub_field.Tag)) == TAG_IGNORE {
 				// the field will not be processed, skip
-				Log(INFO, "#%-2d field %-12v skip", idx, field.Name)
+				Log(INFO, "#%-2d field %v.%v skip", idx, field.Name, sub_field.Name)
 				continue
 			}
 
-			if err = parser.setField(v, field.Type.Field(idx)); err != nil {
-				err = fmt.Errorf("set %v.%v: %v", field.Name, field.Type.Field(idx).Name, err)
+			if err = parser.setField(v, sub_field); err != nil {
+				err = fmt.Errorf("set %v.%v: %v", field.Name, sub_field.Name, err)
 				return
 			}
 		}
