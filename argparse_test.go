@@ -13,6 +13,13 @@ type InnerX struct {
 	Timeout *int
 }
 
+type InnerY struct {
+	Help
+
+	X bool
+	Y int
+}
+
 type Foo struct {
 	Help
 
@@ -27,7 +34,8 @@ type Foo struct {
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 
-	InnerX `help:"embedded and should not be display"`
+	InnerX  `help:"embedded and should not be display"`
+	*InnerY `name:"sub" help:"sub-command"`
 }
 
 type WrongConf1 struct {
@@ -76,6 +84,11 @@ func TestArgParse(t *testing.T) {
 	} else if err := parser.Parse("98765"); err != nil || foo.Timeout == nil || *foo.Timeout != 98765 {
 		t.Fatalf("98765 not work: %v (%v)", foo.Timeout, err)
 	}
+
+	// test sub-command
+	if err := parser.Parse("sub", "--x"); err != nil || foo.InnerY == nil || foo.InnerY.X == false {
+		t.Fatalf("sub --x not work: %v (%v)", foo.InnerY, err)
+	}
 }
 
 func TestArgParseDuplicatedShortcut(t *testing.T) {
@@ -96,9 +109,10 @@ func Example() {
 	parser := MustNew(&foo)
 	// show the message on the STDOUT, for testing
 	parser.Stderr = os.Stdout
-	parser.HelpMessage(nil)
+	parser.ExitOnCallback = false
+	parser.Parse("-h")
 	// Output:
-	// usage: foo [OPTION] [BIND] [TIMEOUT]
+	// usage: foo [OPTION] [BIND] [TIMEOUT] [SUB-COMMAND]
 	//
 	// option:
 	//         -h, --help                  show this message
@@ -111,4 +125,7 @@ func Example() {
 	// argument:
 	//     BIND                            pass the bind HOST:IP
 	//     TIMEOUT
+	//
+	// sub-command:
+	//     sub                             sub-command
 }

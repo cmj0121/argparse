@@ -14,6 +14,12 @@ type InnerX struct {
 	Timeout *int
 }
 
+type InnerY struct {
+	argparse.Help
+	X bool
+	Y int
+}
+
 type Foo struct {
 	argparse.Help
 
@@ -28,7 +34,8 @@ type Foo struct {
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 
-	InnerX `help:"embedded and should not be display"`
+	InnerX  `help:"embedded and should not be display"`
+	*InnerY `name:"sub"`
 }
 
 func main() {

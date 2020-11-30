@@ -26,6 +26,8 @@ type Field struct {
 	reflect.Type
 	reflect.StructTag
 
+	Subcommand *ArgParse
+
 	// the field type
 	FieldType
 
@@ -56,9 +58,22 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		field.Name = strings.TrimSpace(field.Name)
 	}
 
-	if ftyp == ARGUMENT {
+	// customized pre-process by field type
+	switch ftyp {
+	case ARGUMENT:
 		// set the display as the upper-case
 		field.Name = strings.ToUpper(field.Name)
+	case SUBCOMMAND:
+		obj := reflect.New(field.Value.Type().Elem())
+		if field.Subcommand, err = New(obj.Interface()); err != nil {
+			// cannot set the sub-command
+			return
+		}
+
+		if field.StructTag.Get(TAG_NAME) != "" {
+			field.Subcommand.Name = strings.ToLower(field.StructTag.Get(TAG_NAME))
+			field.Subcommand.Name = strings.TrimSpace(field.Name)
+		}
 	}
 
 	if s := field.StructTag.Get(TAG_SHORTCUT); s != "" {
@@ -185,10 +200,16 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 		Log(DEBUG, "set pointer %v: %v", field.Name, field.Value)
 
 		if field.Value.IsNil() {
-			Log(INFO, "nil pointer, new instance: %v", field.Value.Type())
+			if field.Subcommand != nil {
+				Log(INFO, "nil pointer, assign as sub-command")
 
-			obj := reflect.New(field.Value.Type().Elem())
-			field.Value.Set(obj)
+				field.Value.Set(field.Subcommand.Value)
+			} else {
+				Log(INFO, "nil pointer, new instance: %v", field.Value.Type())
+
+				obj := reflect.New(field.Value.Type().Elem())
+				field.Value.Set(obj)
+			}
 		}
 
 		if size, err = field.setValue(field.Value.Elem(), args...); err != nil {
@@ -224,7 +245,7 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 	if fn, ok := parser.callbacks[field.Callback]; ok {
 		Log(DEBUG, "try execute %v", field.Callback)
 		// trigger the callback
-		if fn(parser) {
+		if fn(parser) && parser.ExitOnCallback {
 			// set the exit when return true
 			Log(INFO, "exit when call %v", field.Callback)
 			os.Exit(0)
@@ -283,6 +304,14 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 
 		value.SetString(args[0])
 		size++
+	default:
+		// execute sub-command
+		if err = field.Subcommand.Parse(args...); err != nil {
+			// only show the help message on the sub-command
+			field.Subcommand.HelpMessage(err)
+			os.Exit(1)
+		}
+		size = len(args)
 	}
 
 	Log(INFO, "success set %v", value)

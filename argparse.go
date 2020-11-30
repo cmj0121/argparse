@@ -38,6 +38,7 @@ func New(in interface{}) (parser *ArgParse, err error) {
 		Name:                name,
 		Stderr:              os.Stderr,
 		DisabledUnknwonFlag: true,
+		ExitOnCallback:      true,
 		callbacks:           map[string]Callback{},
 
 		used_option:     map[string]*Field{},
@@ -79,6 +80,7 @@ type ArgParse struct {
 	// the program name for the parser, default is the name of passed structure as lowercase
 	Name                string
 	DisabledUnknwonFlag bool
+	ExitOnCallback      bool
 
 	// the field in the argparse
 	options     []*Field
@@ -193,6 +195,7 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 			}
 
 			if parser.DisabledUnknwonFlag {
+				Log(WARN, "unknown option: %v", token)
 				err = fmt.Errorf("unknown option: %v", token)
 				return
 			}
@@ -241,6 +244,21 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 				return
 			}
 		default:
+			// check the sub-command first
+			for _, field := range parser.subcommands {
+				if field.Name == token {
+					Log(INFO, "set sub-command %v", field.Name)
+					if size, err = field.SetValue(parser, args[idx+1:]...); err != nil {
+						// cannot set the value, raise
+						err = fmt.Errorf("%v %v", field.Name, err)
+						return
+					}
+
+					size++
+					break PROCESS_FIELD
+				}
+			}
+
 			for _, field := range parser.arguments {
 				if field.BeenSet {
 					Log(INFO, "field %v already set %v, skip", field.Name, field.Value)
@@ -343,6 +361,11 @@ func (parser *ArgParse) usage() (str string) {
 	// add the command
 	for _, field := range parser.arguments {
 		str = fmt.Sprintf("%v [%v]", str, strings.ToUpper(field.Name))
+	}
+
+	// add sub-command
+	if len(parser.arguments) > 0 {
+		str = fmt.Sprintf("%v [SUB-COMMAND]", str)
 	}
 
 	return
