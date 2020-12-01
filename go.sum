@@ -1,4 +1,4 @@
 github.com/cmj0121/logger v0.1.0 h1:1Ii+PWLYoeOdD1R5bd4GkNkJohkpAwpOn5V0HSCjshg=
 github.com/cmj0121/logger v0.1.0/go.mod h1:N9vkhQgq34KIbnPLc9NMcCoA7AL95CBEVG0Mi5hpFsA=
-github.com/cmj0121/logger v0.2.1 h1:AYeQK8bfFbOcO2zY60ZkTqfONA7gBgiHpftRHETlEHg=
-github.com/cmj0121/logger v0.2.1/go.mod h1:N9vkhQgq34KIbnPLc9NMcCoA7AL95CBEVG0Mi5hpFsA=
+github.com/cmj0121/logger v1.0.0 h1:75grwn/AE/OyPSn3zKy2Yji64nu2/jk9mquhOQsrCpk=
+github.com/cmj0121/logger v1.0.0/go.mod h1:N9vkhQgq34KIbnPLc9NMcCoA7AL95CBEVG0Mi5hpFsA=

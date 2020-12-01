@@ -1,6 +1,7 @@
 # argparse #
 The *argparse* is the Go-based command-line parser.
 
+![Go test](https://github.com/cmj0121/argparse/workflows/test/badge.svg)
 
 ## Parser ##
 The argparse is based on the reflect to generate the parser by pass the pointer of structure. The fields in
