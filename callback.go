@@ -13,7 +13,7 @@ var (
 type Callback func(parser *ArgParse) bool
 
 func RegisterCallback(name string, fn Callback) {
-	if _, ok := callback[name]; ok {
+	if _, ok := callbacks[name]; ok {
 		// show the alert
 		Log(WARN, "duplicated callback %v, override", name)
 	}
