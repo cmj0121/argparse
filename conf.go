@@ -46,9 +46,10 @@ const (
 )
 
 var (
-	log = logger.New(PROJ_NAME)
+	ENV_LOG_LEVEL = "ARGPARSE_LOG_LEVEL"
+	log           = logger.New(PROJ_NAME)
 )
 
 func init() {
-	log.SetLevel(os.Getenv("LOG_LEVEL"))
+	log.SetLevel(os.Getenv(ENV_LOG_LEVEL))
 }
