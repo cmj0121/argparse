@@ -16,8 +16,9 @@ type InnerX struct {
 
 type InnerY struct {
 	argparse.Help
-	X bool
-	Y int
+	X bool   `short:"x"`
+	Y int    `short:"y"`
+	Z string `short:"z"`
 }
 
 type Foo struct {

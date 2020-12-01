@@ -91,6 +91,15 @@ func TestArgParse(t *testing.T) {
 	}
 }
 
+func TestSubcommand(t *testing.T) {
+	foo := Foo{}
+	parser := MustNew(&foo)
+
+	if err := parser.Parse("sub"); err != nil {
+		t.Fatalf("parse sub --x 12 --y 123: %v", err)
+	}
+}
+
 func TestArgParseDuplicatedShortcut(t *testing.T) {
 	if _, err := New(&WrongConf1{}); err == nil {
 		t.Fatalf("expect %v should be wrong to generate: %v", WrongConf1{}, err)

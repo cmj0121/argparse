@@ -20,7 +20,7 @@ func MustNew(in interface{}) (parser *ArgParse) {
 }
 
 func New(in interface{}) (parser *ArgParse, err error) {
-	Log(INFO, "new %[1]T", in)
+	log.Info("new %[1]T", in)
 
 	value := reflect.ValueOf(in)
 	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct || !value.IsValid() {
@@ -47,15 +47,15 @@ func New(in interface{}) (parser *ArgParse, err error) {
 
 	// process the field
 	typ := value.Elem().Type()
-	Log(VERBOSE, "start process: %v", typ)
+	log.Verbose("start process: %v", typ)
 	for idx := 0; idx < typ.NumField(); idx++ {
 		field := typ.Field(idx)
-		Log(DEBUG, "#%d field: %-12v %v", idx, field.Name, field.Type)
+		log.Debug("#%d field: %-12v %v", idx, field.Name, field.Type)
 
 		v := value.Elem().Field(idx)
 		if !v.CanSet() || strings.TrimSpace(string(field.Tag)) == TAG_IGNORE {
 			// the field will not be processed, skip
-			Log(INFO, "#%-2d field %-12v skip", idx, field.Name)
+			log.Info("#%-2d field %-12v skip", idx, field.Name)
 			continue
 		}
 
@@ -112,7 +112,7 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 		}
 		parser.arguments = append(parser.arguments, new_field)
 	case field.Anonymous:
-		Log(INFO, "set anonymous field: %v", field.Name)
+		log.Info("set anonymous field: %v", field.Name)
 		// embedded field
 		for idx := 0; idx < field.Type.NumField(); idx++ {
 			v := val.Field(idx)
@@ -120,7 +120,7 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 			sub_field := field.Type.Field(idx)
 			if !v.CanSet() || strings.TrimSpace(string(sub_field.Tag)) == TAG_IGNORE {
 				// the field will not be processed, skip
-				Log(INFO, "#%-2d field %v.%v skip", idx, field.Name, sub_field.Name)
+				log.Info("#%-2d field %v.%v skip", idx, field.Name, sub_field.Name)
 				continue
 			}
 
@@ -156,7 +156,7 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 		return
 	}
 
-	Log(INFO, "add new field: %v", new_field)
+	log.Info("add new field: %v", new_field)
 	return
 }
 
@@ -169,12 +169,12 @@ func (parser *ArgParse) Run() (err error) {
 }
 
 func (parser *ArgParse) Parse(args ...string) (err error) {
-	Log(INFO, "parse %#v", args)
+	log.Info("parse %#v", args)
 
 	for idx, size := 0, 0; idx < len(args); idx += size {
 		token := args[idx]
 
-		Log(DEBUG, "parse #%-2d %v", idx, token)
+		log.Debug("%v parse #%-2d %v", parser.Name, idx, token)
 	PROCESS_FIELD:
 		switch {
 		case len(token) > 2 && token[:2] == "--":
@@ -192,12 +192,12 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 			}
 
 			if parser.DisabledUnknwonFlag {
-				Log(WARN, "unknown option: %v", token)
+				log.Warn("unknown option: %v", token)
 				err = fmt.Errorf("unknown option: %v", token)
 				return
 			}
 		case len(token) > 1 && token[:1] == "-":
-			Log(DEBUG, "shortcut: %v (%d)", token[1:], WidecharSize(token[1:]))
+			log.Debug("shortcut: %v (%d)", token[1:], WidecharSize(token[1:]))
 
 			switch {
 			case WidecharSize(token[1:]) == 1 || (WidecharSize(token[1:]) == 2 && len(token[1:]) > 2):
@@ -244,21 +244,21 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 			// check the sub-command first
 			for _, field := range parser.subcommands {
 				if field.Name == token {
-					Log(INFO, "set sub-command %v", field.Name)
-					if size, err = field.SetValue(parser, args[idx+1:]...); err != nil {
+					log.Info("set sub-command %v", field.Name)
+					if _, err = field.SetValue(parser, args[idx+1:]...); err != nil {
 						// cannot set the value, raise
 						err = fmt.Errorf("%v %v", field.Name, err)
 						return
 					}
 
-					size++
-					break PROCESS_FIELD
+					// always return when process sub-command
+					return
 				}
 			}
 
 			for _, field := range parser.arguments {
 				if field.BeenSet {
-					Log(INFO, "field %v already set %v, skip", field.Name, field.Value)
+					log.Info("field %v already set %v, skip", field.Name, field.Value)
 					continue
 				}
 
@@ -271,6 +271,7 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 				break PROCESS_FIELD
 			}
 
+			log.Warn("unknown argument: %v", token)
 			err = fmt.Errorf("unknown argument: %v", token)
 			return
 		}

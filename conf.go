@@ -1,11 +1,17 @@
 package argparse
 
+import (
+	"os"
+
+	"github.com/cmj0121/logger"
+)
+
 // the general version info
 const (
 	PROJ_NAME = "argparse"
 	MAJOR     = 0
 	MINOR     = 4
-	MACRO     = 3
+	MACRO     = 4
 )
 
 // type hint of the field
@@ -38,3 +44,11 @@ const (
 	FMT_PENDING = 8
 	FMT_SIZE    = 24
 )
+
+var (
+	log = logger.New(PROJ_NAME)
+)
+
+func init() {
+	log.SetLevel(os.Getenv("LOG_LEVEL"))
+}

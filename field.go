@@ -197,15 +197,15 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 			return
 		}
 	case reflect.Ptr:
-		Log(DEBUG, "set pointer %v: %v", field.Name, field.Value)
+		log.Debug("set pointer %v: %v", field.Name, field.Value)
 
 		if field.Value.IsNil() {
 			if field.Subcommand != nil {
-				Log(INFO, "nil pointer, assign as sub-command")
+				log.Info("nil pointer, assign as sub-command")
 
 				field.Value.Set(field.Subcommand.Value)
 			} else {
-				Log(INFO, "nil pointer, new instance: %v", field.Value.Type())
+				log.Info("nil pointer, new instance: %v", field.Value.Type())
 
 				obj := reflect.New(field.Value.Type().Elem())
 				field.Value.Set(obj)
@@ -226,34 +226,34 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 				return
 			}
 
-			Log(INFO, "set time.Time as %v", args[0])
+			log.Info("set time.Time as %v", args[0])
 			var timestamp time.Time
 
 			if timestamp, err = time.Parse(time.RFC3339, args[0]); err != nil {
 				err = fmt.Errorf("should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
-				Log(INFO, "should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
+				log.Info("should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
 				return
 			}
 			field.Value.Set(reflect.ValueOf(timestamp))
 		default:
-			Log(WARN, "not implemented set field kind: %v (%v)", kind, field.Value.Type())
+			log.Warn("not implemented set field kind: %v (%v)", kind, field.Value.Type())
 			err = fmt.Errorf("not support field: %v", field.Name)
 			return
 		}
 	}
 
 	if fn := GetCallback(parser.Value, field.Callback); fn != nil {
-		Log(DEBUG, "try execute %v", field.Callback)
+		log.Debug("try execute %v", field.Callback)
 		// trigger the callback
 		if fn(parser) && parser.ExitOnCallback {
 			// set the exit when return true
-			Log(INFO, "exit when call %v", field.Callback)
+			log.Info("exit when call %v", field.Callback)
 			os.Exit(0)
 		}
 	}
 
 	field.BeenSet = true
-	Log(INFO, "set %v as %v", field.Name, field.Value)
+	log.Info("set %v as %v", field.Name, field.Value)
 	return
 }
 
@@ -314,7 +314,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 		size = len(args)
 	}
 
-	Log(INFO, "success set %v", value)
+	log.Info("success set %v (%d)", value, size)
 	return
 }
 
