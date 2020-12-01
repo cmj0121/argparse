@@ -64,7 +64,12 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		// set the display as the upper-case
 		field.Name = strings.ToUpper(field.Name)
 	case SUBCOMMAND:
-		obj := reflect.New(field.Value.Type().Elem())
+		var obj reflect.Value
+
+		if obj = field.Value; field.Value.IsNil() {
+			// nil sub-command, new instance
+			obj = reflect.New(field.Value.Type().Elem())
+		}
 		if field.Subcommand, err = New(obj.Interface()); err != nil {
 			// cannot set the sub-command
 			return
@@ -100,6 +105,7 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 
 	if field.Value.IsValid() && !field.Value.IsZero() {
 		switch field.FieldType {
+		case SUBCOMMAND:
 		case ARGUMENT:
 			field.DefaultValue = field.Value.Elem().Interface()
 		default:
@@ -135,6 +141,11 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		field.TypeHint = TYPE_INT
 	case reflect.String:
 		field.TypeHint = TYPE_STRING
+	default:
+		switch {
+		case field.Value.Type() == reflect.TypeOf(time.Time{}):
+			field.TypeHint = TYPE_TIME
+		}
 	}
 
 	return
@@ -245,15 +256,11 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 	if fn := GetCallback(parser.Value, field.Callback); fn != nil {
 		log.Debug("try execute %v", field.Callback)
 		// trigger the callback
-		if fn(parser) && parser.ExitOnCallback {
-			// set the exit when return true
-			log.Info("exit when call %v", field.Callback)
-			os.Exit(0)
-		}
+		fn(parser)
 	}
 
 	field.BeenSet = true
-	log.Info("set %v as %v", field.Name, field.Value)
+	log.Info("set %v as %v (%d)", field.Name, field.Value, size)
 	return
 }
 

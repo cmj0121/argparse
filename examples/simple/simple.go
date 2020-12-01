@@ -1,27 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/cmj0121/argparse"
 )
 
-type InnerX struct {
-	InnerHide bool `-`
-	Inner     bool
-	// the pass argument
-	Bind    *string `help:"pass the bind HOST:IP"`
-	Timeout *int
-}
-
-type InnerY struct {
-	argparse.Help
-	X bool   `short:"x"`
-	Y int    `short:"y"`
-	Z string `short:"z"`
-}
-
-type Foo struct {
+type Simple struct {
 	argparse.Help
 
 	// the ignore field that will not be processed
@@ -34,14 +19,14 @@ type Foo struct {
 	Count  int    `short:"C" help:"save as the integer"`
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
-
-	InnerX  `help:"embedded and should not be display"`
-	*InnerY `name:"sub"`
+	Now    time.Time
 }
 
 func main() {
-	foo := Foo{}
-	if err := argparse.MustNew(&foo).Run(); err == nil {
-		fmt.Printf("%#v\n", foo)
+	c := Simple{
+		Ignore: false,
+		ignore: true,
 	}
+	parser := argparse.MustNew(&c)
+	parser.Run()
 }

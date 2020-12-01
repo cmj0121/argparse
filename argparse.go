@@ -2,10 +2,13 @@ package argparse
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"reflect"
 	"strings"
+)
+
+var (
+	Stderr = os.Stderr
 )
 
 func MustNew(in interface{}) (parser *ArgParse) {
@@ -34,11 +37,8 @@ func New(in interface{}) (parser *ArgParse, err error) {
 	name = strings.ToLower(name)
 
 	parser = &ArgParse{
-		Value:               value,
-		Name:                name,
-		Stderr:              os.Stderr,
-		DisabledUnknwonFlag: true,
-		ExitOnCallback:      true,
+		Value: value,
+		Name:  name,
 
 		used_option:     map[string]*Field{},
 		used_shortcut:   map[rune]*Field{},
@@ -73,9 +73,7 @@ type ArgParse struct {
 	reflect.Value
 
 	// the program name for the parser, default is the name of passed structure as lowercase
-	Name                string
-	DisabledUnknwonFlag bool
-	ExitOnCallback      bool
+	Name string
 
 	// the field in the argparse
 	options     []*Field
@@ -86,9 +84,6 @@ type ArgParse struct {
 	used_option     map[string]*Field
 	used_shortcut   map[rune]*Field
 	used_subcommand map[string]*Field
-
-	// IO for show the help message
-	Stderr io.StringWriter
 }
 
 func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (err error) {
@@ -187,15 +182,14 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 						return
 					}
 
+					size++
 					break PROCESS_FIELD
 				}
 			}
 
-			if parser.DisabledUnknwonFlag {
-				log.Warn("unknown option: %v", token)
-				err = fmt.Errorf("unknown option: %v", token)
-				return
-			}
+			log.Warn("unknown option: %v", token)
+			err = fmt.Errorf("unknown option: %v", token)
+			return
 		case len(token) > 1 && token[:1] == "-":
 			log.Debug("shortcut: %v (%d)", token[1:], WidecharSize(token[1:]))
 
@@ -236,10 +230,8 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 				break PROCESS_FIELD
 			}
 
-			if parser.DisabledUnknwonFlag {
-				err = fmt.Errorf("unknown option: %v", token)
-				return
-			}
+			err = fmt.Errorf("unknown option: %v", token)
+			return
 		default:
 			// check the sub-command first
 			for _, field := range parser.subcommands {
@@ -345,7 +337,7 @@ func (parser *ArgParse) HelpMessage(err error) {
 	}
 
 	msg := strings.Join(msgs, "\n") + "\n"
-	parser.Stderr.WriteString(msg)
+	Stderr.WriteString(msg)
 }
 
 func (parser *ArgParse) usage() (str string) {

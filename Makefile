@@ -1,8 +1,9 @@
 .PHONY: all clean help
 
-BIN := $(subst .go,,$(wildcard examples/*.go))
+SRC := $(filter-out $(wildcard examples/*/*_test.go), $(wildcard examples/*/*.go))
+BIN := $(subst .go,,$(SRC))
 
-all: $(BIN)	# build all binary
+all: $(BIN) linter	# build all binary
 
 clean:		# clean-up the environment
 	rm -f $(BIN)
@@ -21,7 +22,7 @@ GOBENCH := $(GO) test -bench=. -cover -failfast -benchmem
 
 linter:
 	$(GOFMT) $(shell find . -name '*.go')
-	$(GOTEST)
+	$(GOTEST) ./...
 	$(GOBENCH)
 
 $(BIN): linter

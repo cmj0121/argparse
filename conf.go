@@ -10,14 +10,15 @@ import (
 const (
 	PROJ_NAME = "argparse"
 	MAJOR     = 0
-	MINOR     = 4
-	MACRO     = 4
+	MINOR     = 5
+	MACRO     = 0
 )
 
 // type hint of the field
 const (
 	TYPE_INT    = "INT"
 	TYPE_STRING = "STR"
+	TYPE_TIME   = "TIME"
 )
 
 // default key tag and value used when parse *Struct
