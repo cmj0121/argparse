@@ -1,11 +1,5 @@
 package argparse
 
-import (
-	"os"
-
-	"github.com/cmj0121/logger"
-)
-
 // the general version info
 const (
 	PROJ_NAME = "argparse"
@@ -45,12 +39,3 @@ const (
 	FMT_PENDING = 8
 	FMT_SIZE    = 24
 )
-
-var (
-	ENV_LOG_LEVEL = "ARGPARSE_LOG_LEVEL"
-	log           = logger.New(PROJ_NAME)
-)
-
-func init() {
-	log.SetLevel(os.Getenv(ENV_LOG_LEVEL))
-}

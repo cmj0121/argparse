@@ -5,10 +5,13 @@ import (
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/cmj0121/logger"
 )
 
 var (
 	Stderr = os.Stderr
+	log    = logger.New(PROJ_NAME)
 )
 
 func MustNew(in interface{}) (parser *ArgParse) {
@@ -89,26 +92,28 @@ type ArgParse struct {
 func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (err error) {
 	var new_field *Field
 
+	log.Debug("try set field: %v", val)
 	switch {
-	case field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct:
-		if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
-			return
-		}
+	case field.Type.Kind() == reflect.Ptr: // argument or sub-command
+		switch field.Type.Elem().Kind() {
+		case reflect.Struct:
+			if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
+				return
+			}
 
-		if _, ok := parser.used_subcommand[new_field.Name]; ok {
-			err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
-			return
+			if _, ok := parser.used_subcommand[new_field.Name]; ok {
+				err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
+				return
+			}
+			parser.used_subcommand[new_field.Name] = new_field
+			parser.subcommands = append(parser.subcommands, new_field)
+		default:
+			if new_field, err = NewField(val, field, ARGUMENT); err != nil {
+				return
+			}
+			parser.arguments = append(parser.arguments, new_field)
 		}
-		parser.used_subcommand[new_field.Name] = new_field
-		parser.subcommands = append(parser.subcommands, new_field)
-	case field.Type.Kind() == reflect.Ptr:
-		if new_field, err = NewField(val, field, ARGUMENT); err != nil {
-			return
-		}
-		parser.arguments = append(parser.arguments, new_field)
-	case field.Anonymous:
-		log.Info("set anonymous field: %v", field.Name)
-		// embedded field
+	case field.Type.Kind() == reflect.Struct && field.Anonymous: // embedded field
 		for idx := 0; idx < field.Type.NumField(); idx++ {
 			v := val.Field(idx)
 
