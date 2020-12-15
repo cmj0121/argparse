@@ -1,7 +1,6 @@
 # argparse #
-The *argparse* is the Go-based command-line parser.
-
 ![Go test](https://github.com/cmj0121/argparse/workflows/test/badge.svg)
+The *argparse* is the Go-based command-line parser.
 
 ## Example ##
 The following is the sample structure that can be generate the command-line parse by the argparse. The `argparse.Help`.
