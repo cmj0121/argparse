@@ -4,17 +4,11 @@ The *argparse* is the Go-based command-line parser.
 ![Go test](https://github.com/cmj0121/argparse/workflows/test/badge.svg)
 
 ## Example ##
+The following is the sample structure that can be generate the command-line parse by the argparse. The `argparse.Help`.
+Call `Run` or `Parse` and the argparse will parse the input argument (default is os.Args) and then set the field in the
+struct
 
 ```go
-package main
-
-import (
-	"fmt"
-	"time"
-
-	"github.com/cmj0121/argparse"
-)
-
 type Simple struct {
 	argparse.Help
 
@@ -30,18 +24,8 @@ type Simple struct {
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 	Now    time.Time
 
-	Optional []string `name:"opt" help:"multiple option and save as array"`
-}
-
-func main() {
-	c := Simple{
-		Ignore: false,
-		ignore: true,
-	}
-	parser := argparse.MustNew(&c)
-	parser.Run()
-
-	fmt.Printf("%#v\n", c)
+	Optional []string  `name:"opt" help:"multiple option and save as array"`
+	Args     *[]string `help:"arbitrary argument"`
 }
 ```
 
@@ -70,17 +54,18 @@ There are few tags use for the customized field setting
 | name     | replace the field name, and will only treated as the lowercase       |
 | short    | the shortcut of option, should be one and only one rune              |
 | help     | the help message of the option or argument                           |
-| callback | the callback function and be triggered when pass the valid argument |
+| callback | the callback function and be triggered when pass the valid argument  |
 | choices  | fixed choice of the pass arguments, separated by the space           |
 
 ### Callback ##
-You can define the **callback** when you have to execute some specified method when set the valid option or argument. There
-are two methods when define the callback: 1) global callback and 2) the method in your structure. When call the
-**RegisterCallback** the parser will register callback in the global scope, and it can be used on other parser. Also you can
-define the method as the same type of `Callback`, correct defined in the tag and it will be executed when set the valid value.
+You can define the **callback** when you have to execute some specified method when set the valid option or argument.
+There are two methods when define the callback: 1) global callback and 2) the method in your structure. When call the
+**RegisterCallback** the parser will register callback in the global scope, and it can be used on other parser. Also
+you can define the method as the same type of `Callback`, correct defined in the tag and it will be executed when set
+the valid value.
 
-The `GetCallback` will find the customized callback first, and then try the global callback. It may return **nil** when no
-valid callback found.
+The `GetCallback` will find the customized callback first, and then try the global callback. It may return **nil** 
+when no valid callback found.
 
 ## Inner Log sub-system ##
 The `Log` is the sub-system in the argparse which provide the simple logging system. It can be change the log
