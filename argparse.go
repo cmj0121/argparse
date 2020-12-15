@@ -360,12 +360,17 @@ func (parser *ArgParse) usage() (str string) {
 
 	// add the command
 	for _, field := range parser.arguments {
-		str = fmt.Sprintf("%v [%v]", str, strings.ToUpper(field.Name))
+		if field.FieldType == ARGUMENT {
+			str = fmt.Sprintf("%v %v", str, strings.ToUpper(field.Name))
+		}
 	}
 
 	// add sub-command
-	if len(parser.arguments) > 0 {
-		str = fmt.Sprintf("%v [SUB-COMMAND]", str)
+	for _, field := range parser.arguments {
+		if field.FieldType == SUBCOMMAND {
+			str = fmt.Sprintf("%v [SUB-COMMAND]", str)
+			break
+		}
 	}
 
 	return

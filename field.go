@@ -202,10 +202,15 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err error) {
 	size = 1
 	switch kind := field.Value.Kind(); kind {
-	case reflect.Bool,
-		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.String:
+	case reflect.Bool:
+		fallthrough
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fallthrough
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		fallthrough
+	case reflect.String:
+		fallthrough
+	case reflect.Slice:
 		// the basic setter
 		if size, err = field.setValue(field.Value, args...); err != nil {
 			return
@@ -232,13 +237,6 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 
 		// HACK - override the used args as 1
 		size = 1
-	case reflect.Slice:
-		elem := reflect.New(field.Value.Type().Elem()).Elem()
-		if size, err = field.setValue(elem, args...); err != nil {
-			err = fmt.Errorf("cannot set %v: %v", err, field.Value.Type())
-			return
-		}
-		field.Value.Set(reflect.Append(field.Value, elem))
 	default:
 		switch {
 		case field.Value.Type() == reflect.TypeOf(time.Time{}):
@@ -270,11 +268,17 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 	}
 
 	field.BeenSet = true
+	if field.Value.Kind() == reflect.Ptr && field.Value.Elem().Kind() == reflect.Slice {
+		// can set repeat
+		field.BeenSet = false
+	}
 	log.Info("set %v as %v (%d)", field.Name, field.Value, size)
 	return
 }
 
 func (field *Field) setValue(value reflect.Value, args ...string) (size int, err error) {
+	log.Debug("try set value: %v (%#v)", value.Type(), args)
+
 	switch kind := value.Kind(); kind {
 	case reflect.Bool:
 		// toggle the boolean
@@ -326,7 +330,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 
 		value.SetString(args[0])
 		size++
-	default:
+	case reflect.Struct:
 		// execute sub-command
 		if err = field.Subcommand.Parse(args...); err != nil {
 			// only show the help message on the sub-command
@@ -334,6 +338,17 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			os.Exit(1)
 		}
 		size = len(args)
+	case reflect.Slice:
+		elem := reflect.New(value.Type().Elem()).Elem()
+		if size, err = field.setValue(elem, args...); err != nil {
+			err = fmt.Errorf("cannot set %v: %v", err, value.Type())
+			return
+		}
+		value.Set(reflect.Append(value, elem))
+	default:
+		log.Warn("not implemented set value: %v", kind)
+		err = fmt.Errorf("not implemented set value: %v", kind)
+		return
 	}
 
 	log.Debug("success set %v (%d)", value, size)

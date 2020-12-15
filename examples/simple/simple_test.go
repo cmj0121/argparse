@@ -15,7 +15,7 @@ func ExampleSimple() {
 	parser := argparse.MustNew(&c)
 	parser.Parse("-h")
 	// Output:
-	// usage: simple [OPTION]
+	// usage: simple [OPTION] ARGS
 	//
 	// option:
 	//         -h, --help                  show this message
@@ -25,6 +25,9 @@ func ExampleSimple() {
 	//     -c STR, --cases STR             choice from fix possible [demo foo]
 	//             --now TIME
 	//             --opt                   multiple option and save as array
+	//
+	// argument:
+	//     ARGS                            arbitrary argument
 }
 
 func ExampleSimpleDefault() {
@@ -42,7 +45,7 @@ func ExampleSimpleDefault() {
 	parser := argparse.MustNew(&c)
 	parser.Parse("-h")
 	// Output:
-	// usage: simple [OPTION]
+	// usage: simple [OPTION] ARGS
 	//
 	// option:
 	//         -h, --help                  show this message
@@ -52,6 +55,9 @@ func ExampleSimpleDefault() {
 	//     -c STR, --cases STR             choice from fix possible [demo foo] (default: demo)
 	//             --now TIME
 	//             --opt                   multiple option and save as array
+	//
+	// argument:
+	//     ARGS                            arbitrary argument
 }
 
 func TestSimple(t *testing.T) {

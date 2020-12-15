@@ -22,7 +22,8 @@ type Simple struct {
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 	Now    time.Time
 
-	Optional []string `name:"opt" help:"multiple option and save as array"`
+	Optional []string  `name:"opt" help:"multiple option and save as array"`
+	Args     *[]string `help:"arbitrary argument"`
 }
 
 func main() {
