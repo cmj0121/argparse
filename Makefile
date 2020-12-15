@@ -17,7 +17,7 @@ help:		# show this message
 GO      := go
 GOFMT   := $(GO)fmt -w -s
 GOFLAG  := -ldflags="-s -w"
-GOTEST  := $(GO) test -v -cover -failfast -timeout 2s
+GOTEST  := $(GO) test -cover -failfast -timeout 2s
 GOBENCH := $(GO) test -bench=. -cover -failfast -benchmem
 
 linter:

@@ -9,38 +9,39 @@ The *argparse* is the Go-based command-line parser.
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cmj0121/argparse"
 )
 
-type AccessLog struct {
+type Simple struct {
 	argparse.Help
 
-	Last  time.Time
-	Login bool
-}
+	// the ignore field that will not be processed
+	Ignore bool `-`
+	ignore bool
+	_      [8]byte `pending byte`
 
-// for the small example
-type UserConf struct {
-	argparse.Help
+	// the option can be set repeatedly by-default
+	Switch bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
+	Count  int    `short:"C" help:"save as the integer"`
+	Name   string `name:"user-name"`
+	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
+	Now    time.Time
 
-	Username string `short:"u" help:"username"`
-	Password string `short:"p" help:"password"`
-
-	*AccessLog `name:"log" help:"access log"`
+	Optional []string `name:"opt" help:"multiple option and save as array"`
 }
 
 func main() {
-	c := UserConf{
-		Username: "root",
-		Password: "password",
-		AccessLog: &AccessLog{
-			Login: true,
-		},
+	c := Simple{
+		Ignore: false,
+		ignore: true,
 	}
 	parser := argparse.MustNew(&c)
 	parser.Run()
+
+	fmt.Printf("%#v\n", c)
 }
 ```
 

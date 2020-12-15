@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cmj0121/argparse"
@@ -20,6 +21,8 @@ type Simple struct {
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
 	Now    time.Time
+
+	Optional []string `name:"opt" help:"multiple option and save as array"`
 }
 
 func main() {
@@ -29,4 +32,6 @@ func main() {
 	}
 	parser := argparse.MustNew(&c)
 	parser.Run()
+
+	fmt.Printf("%#v\n", c)
 }

@@ -174,10 +174,12 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 	for idx, size := 0, 0; idx < len(args); idx += size {
 		token := args[idx]
 
-		log.Debug("%v parse #%-2d %v", parser.Name, idx, token)
+		log.Info("%v parse #%-2d %v", parser.Name, idx, token)
 	PROCESS_FIELD:
 		switch {
 		case len(token) > 2 && token[:2] == "--":
+			log.Debug("optional: %v", token)
+
 			for _, field := range parser.options {
 				if field.Name == token[2:] {
 					// set the value
@@ -210,6 +212,7 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 							return
 						}
 
+						size++
 						break PROCESS_FIELD
 					}
 				}
@@ -238,6 +241,8 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 			err = fmt.Errorf("unknown option: %v", token)
 			return
 		default:
+			log.Debug("argument or sub-command: %v", token)
+
 			// check the sub-command first
 			for _, field := range parser.subcommands {
 				if field.Name == token {

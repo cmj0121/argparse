@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/cmj0121/argparse"
@@ -23,6 +24,7 @@ func ExampleSimple() {
 	//             --user-name STR
 	//     -c STR, --cases STR             choice from fix possible [demo foo]
 	//             --now TIME
+	//             --opt                   multiple option and save as array
 }
 
 func ExampleSimpleDefault() {
@@ -49,6 +51,7 @@ func ExampleSimpleDefault() {
 	//             --user-name STR         (default: simple)
 	//     -c STR, --cases STR             choice from fix possible [demo foo] (default: demo)
 	//             --now TIME
+	//             --opt                   multiple option and save as array
 }
 
 func TestSimple(t *testing.T) {
@@ -78,6 +81,22 @@ func TestSimple(t *testing.T) {
 		}
 		if c.Name != "username" {
 			t.Errorf("parse --user-name username: %v", c.Name)
+		}
+	}
+
+	if err := parser.Parse("--opt", "a"); err != nil {
+		t.Fatalf("cannot parse --opt a: %v", err)
+	} else {
+		if ans := []string{"a"}; !reflect.DeepEqual(ans, c.Optional) {
+			t.Errorf("parse --opt a: %#v <> %#v", ans, c.Optional)
+		}
+	}
+
+	if err := parser.Parse("--opt", "b", "--opt", "c"); err != nil {
+		t.Fatalf("cannot parse --opt a: %v", err)
+	} else {
+		if ans := []string{"a", "b", "c"}; !reflect.DeepEqual(ans, c.Optional) {
+			t.Errorf("parse --opt a: %#v <> %#v", ans, c.Optional)
 		}
 	}
 }

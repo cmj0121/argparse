@@ -232,6 +232,13 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 
 		// HACK - override the used args as 1
 		size = 1
+	case reflect.Slice:
+		elem := reflect.New(field.Value.Type().Elem()).Elem()
+		if size, err = field.setValue(elem, args...); err != nil {
+			err = fmt.Errorf("cannot set %v: %v", err, field.Value.Type())
+			return
+		}
+		field.Value.Set(reflect.Append(field.Value, elem))
 	default:
 		switch {
 		case field.Value.Type() == reflect.TypeOf(time.Time{}):
@@ -251,7 +258,7 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 			field.Value.Set(reflect.ValueOf(timestamp))
 		default:
 			log.Warn("not implemented set field kind: %v (%v)", kind, field.Value.Type())
-			err = fmt.Errorf("not support field: %v", field.Name)
+			err = fmt.Errorf("not support field: %v (%v)", field.Name, field.Value.Type())
 			return
 		}
 	}
@@ -268,8 +275,6 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 }
 
 func (field *Field) setValue(value reflect.Value, args ...string) (size int, err error) {
-	size = 1
-
 	switch kind := value.Kind(); kind {
 	case reflect.Bool:
 		// toggle the boolean
@@ -302,6 +307,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 		default:
 			value.SetUint(uint64(val))
 		}
+
 		size++
 	case reflect.String:
 		// override the string
@@ -330,7 +336,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 		size = len(args)
 	}
 
-	log.Info("success set %v (%d)", value, size)
+	log.Debug("success set %v (%d)", value, size)
 	return
 }
 
