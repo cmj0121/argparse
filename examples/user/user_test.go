@@ -46,6 +46,7 @@ func ExampleUserConfLog() {
 	//         -h, --help                  show this message
 	//             --last TIME
 	//             --login
+	//             --word                  the field that define in the other package, as uint
 }
 
 func ExampleUserConfDefault() {
@@ -93,6 +94,7 @@ func ExampleUserConfLogDefault() {
 	//         -h, --help                  show this message
 	//             --last TIME
 	//             --login                 (default: true)
+	//             --word                  the field that define in the other package, as uint
 }
 
 func TestUserConf(t *testing.T) {

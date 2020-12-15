@@ -1,16 +1,21 @@
 package main
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/cmj0121/argparse"
 )
+
+type Level int
 
 type AccessLog struct {
 	argparse.Help
 
 	Last  time.Time
 	Login bool
+
+	big.Word `help:"the field that define in the other package, as uint"`
 }
 
 // for the small example

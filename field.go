@@ -202,7 +202,10 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err error) {
 	size = 1
 	switch kind := field.Value.Kind(); kind {
-	case reflect.Bool, reflect.Int, reflect.String:
+	case reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.String:
 		// the basic setter
 		if size, err = field.setValue(field.Value, args...); err != nil {
 			return
@@ -271,7 +274,8 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 	case reflect.Bool:
 		// toggle the boolean
 		value.SetBool(!value.Interface().(bool))
-	case reflect.Int:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		// override the integer
 		if len(args) == 0 {
 			err = fmt.Errorf("should pass %v", TYPE_INT)
@@ -292,7 +296,12 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			}
 		}
 
-		value.SetInt(int64(val))
+		switch kind {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			value.SetInt(int64(val))
+		default:
+			value.SetUint(uint64(val))
+		}
 		size++
 	case reflect.String:
 		// override the string

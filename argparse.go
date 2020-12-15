@@ -92,7 +92,7 @@ type ArgParse struct {
 func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (err error) {
 	var new_field *Field
 
-	log.Debug("try set field: %v", val)
+	log.Debug("try set field: %v (%v)", val, val.Type())
 	switch {
 	case field.Type.Kind() == reflect.Ptr: // argument or sub-command
 		switch field.Type.Elem().Kind() {
