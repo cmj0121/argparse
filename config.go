@@ -5,7 +5,7 @@ const (
 	PROJ_NAME = "argparse"
 	MAJOR     = 0
 	MINOR     = 5
-	MACRO     = 0
+	MACRO     = 1
 )
 
 // type hint of the field
