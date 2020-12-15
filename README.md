@@ -3,6 +3,47 @@ The *argparse* is the Go-based command-line parser.
 
 ![Go test](https://github.com/cmj0121/argparse/workflows/test/badge.svg)
 
+## Example ##
+
+```go
+package main
+
+import (
+	"time"
+
+	"github.com/cmj0121/argparse"
+)
+
+type AccessLog struct {
+	argparse.Help
+
+	Last  time.Time
+	Login bool
+}
+
+// for the small example
+type UserConf struct {
+	argparse.Help
+
+	Username string `short:"u" help:"username"`
+	Password string `short:"p" help:"password"`
+
+	*AccessLog `name:"log" help:"access log"`
+}
+
+func main() {
+	c := UserConf{
+		Username: "root",
+		Password: "password",
+		AccessLog: &AccessLog{
+			Login: true,
+		},
+	}
+	parser := argparse.MustNew(&c)
+	parser.Run()
+}
+```
+
 ## Parser ##
 The argparse is based on the reflect to generate the parser by pass the pointer of structure. The fields in
 the structure may contains the tag which is the customized setting on the field. Without of the general,
