@@ -263,8 +263,11 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 
 	if fn := GetCallback(parser.Value, field.Callback); fn != nil {
 		log.Debug("try execute %v", field.Callback)
-		// trigger the callback
-		fn(parser)
+		// trigger the callback, exit when callback return true
+		if fn(parser) {
+			log.Info("execute callback %v, and exit 0", field.Callback)
+			os.Exit(0)
+		}
 	}
 
 	field.BeenSet = true
