@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/cmj0121/argparse"
@@ -15,7 +16,7 @@ func ExampleSimple() {
 	parser := argparse.MustNew(&c)
 	parser.Parse("-h")
 	// Output:
-	// usage: simple [OPTION]
+	// usage: simple [OPTION] PATH
 	//
 	// option:
 	//          -h, --help                  show this message
@@ -24,6 +25,9 @@ func ExampleSimple() {
 	//      -C INT, --count INT             save as the integer
 	//              --user-name STR
 	//      -c STR, --cases STR             choice from fix possible [demo foo]
+	//
+	// argument:
+	//     PATH                             multi-argument
 }
 
 func ExampleSimpleDefault() {
@@ -42,7 +46,7 @@ func ExampleSimpleDefault() {
 	parser := argparse.MustNew(&c)
 	parser.Parse("-h")
 	// Output:
-	// usage: simple [OPTION]
+	// usage: simple [OPTION] PATH
 	//
 	// option:
 	//          -h, --help                  show this message
@@ -51,6 +55,9 @@ func ExampleSimpleDefault() {
 	//      -C INT, --count INT             save as the integer (default: 123)
 	//              --user-name STR         (default: simple)
 	//      -c STR, --cases STR             choice from fix possible [demo foo] (default: demo)
+	//
+	// argument:
+	//     PATH                             multi-argument
 }
 
 func TestSimple(t *testing.T) {
@@ -90,6 +97,14 @@ func TestSimple(t *testing.T) {
 	} else {
 		if c.Cases != "foo" {
 			t.Errorf("parse -c foo: %v", c.Cases)
+		}
+	}
+
+	if err := parser.Parse("x", "y", "z"); err != nil {
+		t.Fatalf("cannot parse x y x : %v", err)
+	} else {
+		if ans := []string{"x", "y", "z"}; !reflect.DeepEqual(*c.Path, ans) {
+			t.Errorf("parse x y z: %#v", c.Path)
 		}
 	}
 }

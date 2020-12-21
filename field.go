@@ -247,40 +247,9 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 // pre-process the field setting, include new instance
 func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err error) {
 	size = 1
-	switch kind := field.Value.Kind(); kind {
-	case reflect.Slice:
-		elem := reflect.New(field.Value.Type().Elem()).Elem()
-		if size, err = field.setValue(elem, args...); err != nil {
-			err = fmt.Errorf("cannot set %#v: %v", field.Value.Type(), err)
-			return
-		}
-
-		// append to the slice
-		field.Value.Set(reflect.Append(field.Value, elem))
-	case reflect.Ptr:
-		log.Debug("set pointer %v: %v", field.Name, field.Value)
-
-		if field.Value.IsNil() {
-			if field.Subcommand != nil {
-				log.Info("nil pointer, assign as sub-command")
-
-				field.Value.Set(field.Subcommand.Value)
-			} else {
-				log.Info("nil pointer, new instance: %v", field.Value.Type())
-
-				obj := reflect.New(field.Value.Type().Elem())
-				field.Value.Set(obj)
-			}
-		}
-
-		if size, err = field.setValue(field.Value.Elem(), args...); err != nil {
-			return
-		}
-	default:
-		// the basic setter
-		if size, err = field.setValue(field.Value, args...); err != nil {
-			return
-		}
+	// the basic setter
+	if size, err = field.setValue(field.Value, args...); err != nil {
+		return
 	}
 
 	if fn := GetCallback(parser.Value, field.Callback); fn != nil {
@@ -411,6 +380,34 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 				field.Subcommand.HelpMessage(err)
 				os.Exit(1)
 			}
+		case reflect.Ptr:
+			log.Debug("set pointer %v: %v", field.Name, value)
+
+			if value.IsNil() {
+				if field.Subcommand != nil {
+					log.Info("nil pointer, assign as sub-command")
+
+					value.Set(field.Subcommand.Value)
+				} else {
+					log.Info("nil pointer, new instance: %v", value.Type())
+
+					obj := reflect.New(value.Type().Elem())
+					value.Set(obj)
+				}
+			}
+
+			if size, err = field.setValue(value.Elem(), args...); err != nil {
+				return
+			}
+		case reflect.Slice:
+			elem := reflect.New(value.Type().Elem()).Elem()
+			if size, err = field.setValue(elem, args...); err != nil {
+				err = fmt.Errorf("cannot set %#v: %v", value.Type(), err)
+				return
+			}
+
+			// append to the slice
+			value.Set(reflect.Append(value, elem))
 		default:
 			log.Warn("not implemented set value: %[1]v (%[1]T)", value.Interface())
 			err = fmt.Errorf("not implemented set value: %[1]v (%[1]T)", value.Interface())

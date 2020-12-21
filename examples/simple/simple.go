@@ -20,6 +20,8 @@ type Simple struct {
 	Count  int    `short:"C" help:"save as the integer"`
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
+
+	Path *[]string `help:"multi-argument"`
 }
 
 func main() {
