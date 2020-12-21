@@ -263,11 +263,12 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 					found := false
 					for _, field := range parser.options {
 						if field.Shortcut == shortcut {
-							if size, err = field.SetValue(parser); err != nil {
+							if _, err = field.SetValue(parser); err != nil {
 								// cannot set the value, raise
-								err = fmt.Errorf("%v %v", token, err)
+								err = fmt.Errorf("multi-shortcut %#v cannot set: %v", token, err)
 								return
 							}
+
 							found = true
 						}
 					}
@@ -277,6 +278,9 @@ func (parser *ArgParse) Parse(args ...string) (err error) {
 						return
 					}
 				}
+
+				// skip this option
+				size++
 				break PROCESS_FIELD
 			}
 
