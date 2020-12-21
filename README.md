@@ -3,13 +3,10 @@
 The *argparse* is the Go-based command-line parser.
 
 ## Example ##
-The following is the sample structure that can be generate the command-line parse by the argparse. The `argparse.Help`.
-Call `Run` or `Parse` and the argparse will parse the input argument (default is os.Args) and then set the field in the
-struct
 
 ```go
 type Simple struct {
-	argparse.Help
+	argparse.Model
 
 	// the ignore field that will not be processed
 	Ignore bool `-`
@@ -21,28 +18,30 @@ type Simple struct {
 	Count  int    `short:"C" help:"save as the integer"`
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
-	Now    time.Time
-
-	Optional []string  `name:"opt" help:"multiple option and save as array"`
-	Args     *[]string `help:"arbitrary argument"`
 }
+
 ```
 
-## Parser ##
-The argparse is based on the reflect to generate the parser by pass the pointer of structure. The fields in
-the structure may contains the tag which is the customized setting on the field. Without of the general,
-the field in the structure may or may not the pointer. The general field, include the embedded structure
-are treated as the *option*, and the pointer field will be treated as the argument.
-
-The type of the field is used to control the pass data to the option and/or argument. For example, the boolean
-type is used as the switch, and the integer will only allow to save the digest variable.
+## Types ##
+In the argparse it support several built-in type. The type of the field is used to control the pass data to the option and/or
+the argument. For example, the boolean type is used as the switch, and the integer will only allow to save the as digest. It
+is implemented in the `field.setValue`:
 
 | type      | description                                          |
 |-----------|------------------------------------------------------|
 | bool      | the switch toggle without pass the extra variable    |
 | int       | pass the valid gigital and save as the int            |
 | string    | pass any string, include empty string or binary data |
-| time.Time | pass the valid RFC-3339 time format string           |
+
+### Syntax-Sugar ###
+The argparse supports few types that can be easily parse and used in the command-line.
+
+| type          | hint  | description                         |
+|---------------|-------|-------------------------------------|
+| os.FileMode   | PERM  | the file permission in the system   |
+| time.Time     | TIME  | the timestamp noted by the RFC-3339 |
+| net.Interface | IFACE | the interface in the system         |
+
 
 ### tags ###
 There are few tags use for the customized field setting
@@ -67,12 +66,3 @@ the valid value.
 The `GetCallback` will find the customized callback first, and then try the global callback. It may return **nil** 
 when no valid callback found.
 
-## Inner Log sub-system ##
-The `Log` is the sub-system in the argparse which provide the simple logging system. It can be change the log
-level by pass the environment *LOG_LEVEL* and change the level, and you can override the logger by `SetLogger`.
-
-
-## specified Type ##
-- os.FileMode
-- time.Time
-- net.Interface

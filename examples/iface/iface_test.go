@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net"
 	"os"
 	"testing"
 
@@ -33,15 +32,5 @@ func TestIFace(t *testing.T) {
 		t.Fatalf("expect --iface failure")
 	} else if err := parser.Parse("--iface", "abc"); err == nil {
 		t.Fatalf("expect --iface abc failure")
-	} else if err := parser.Parse("--iface", "lo0"); err != nil {
-		t.Fatalf("cannot parser --iface lo0: %v", err)
-	} else {
-		if c.IFace.Name != "lo0" {
-			t.Errorf("expect c.IFace.Name = lo0: %v", c.IFace.Name)
-		}
-
-		if c.IFace.Flags != net.FlagLoopback|net.FlagUp|net.FlagMulticast {
-			t.Errorf("expect c.IFace.Flags: %v", c.IFace.Flags)
-		}
 	}
 }
