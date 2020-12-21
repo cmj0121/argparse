@@ -55,6 +55,7 @@ There are few tags use for the customized field setting
 | help     | the help message of the option or argument                           |
 | callback | the callback function and be triggered when pass the valid argument  |
 | choices  | fixed choice of the pass arguments, separated by the space           |
+| args     | force set as the option (value: option)                              |
 
 ### Callback ##
 You can define the **callback** when you have to execute some specified method when set the valid option or argument.

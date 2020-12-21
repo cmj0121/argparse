@@ -4,8 +4,8 @@ package argparse
 const (
 	PROJ_NAME = "argparse"
 	MAJOR     = 0
-	MINOR     = 5
-	MACRO     = 6
+	MINOR     = 6
+	MACRO     = 0
 )
 
 // type hint of the field
@@ -21,12 +21,14 @@ const (
 	TAG_IGNORE = "-"
 	// the reserved key used in the structure
 	TAG_RESERVED_KEY = "args"
-	TAG_SHORTCUT     = "short"
-	TAG_NAME         = "name"
-	TAG_HELP         = "help"
-	TAG_CALLBACK     = "callback"
-	TAG_CHOICES      = "choices"
-	TAG_CHOICES_SEP  = " "
+	TAG_OPTION       = "option"
+
+	TAG_SHORTCUT    = "short"
+	TAG_NAME        = "name"
+	TAG_HELP        = "help"
+	TAG_CALLBACK    = "callback"
+	TAG_CHOICES     = "choices"
+	TAG_CHOICES_SEP = " "
 	// the reserved key used in TAG_KEY
 	KEY_PASSWORD = "password"
 	// default callback KEY

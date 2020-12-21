@@ -11,7 +11,7 @@ import (
 type IFace struct {
 	argparse.Help
 
-	IFace net.Interface
+	IFace *net.Interface `args:"option"`
 
 	*net.Interface `name:"iface"`
 }

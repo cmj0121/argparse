@@ -100,31 +100,55 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 	case field.Type.Kind() == reflect.Ptr: // argument or sub-command
 		log.Debug("argument or sub-command: %v", field.Type.Elem().Kind())
 
-		switch field.Type.Elem().Kind() {
-		case reflect.Struct:
-			switch val.Interface().(type) {
-			case *net.Interface:
+		switch field.Tag.Get(TAG_RESERVED_KEY) {
+		case TAG_OPTION:
+			log.Info("force set as option: %[1]T", val.Interface())
+			if new_field, err = NewField(val, field, OPTION); err != nil {
+				return
+			}
+
+			if _, ok := parser.used_option["--"+new_field.Name]; ok {
+				err = fmt.Errorf("duplicated option --%v", new_field.Name)
+				return
+			}
+			parser.used_option["--"+new_field.Name] = new_field
+
+			if new_field.Shortcut != rune(0) {
+				if _, ok := parser.used_option["-"+string(new_field.Shortcut)]; ok {
+					err = fmt.Errorf("duplicated option -%v", string(new_field.Shortcut))
+					return
+				}
+				parser.used_option["-"+string(new_field.Shortcut)] = new_field
+			}
+
+			parser.options = append(parser.options, new_field)
+		default:
+			switch field.Type.Elem().Kind() {
+			case reflect.Struct:
+				switch val.Interface().(type) {
+				case *net.Interface:
+					if new_field, err = NewField(val, field, ARGUMENT); err != nil {
+						return
+					}
+					parser.arguments = append(parser.arguments, new_field)
+				default:
+					if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
+						return
+					}
+
+					if _, ok := parser.used_subcommand[new_field.Name]; ok {
+						err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
+						return
+					}
+					parser.used_subcommand[new_field.Name] = new_field
+					parser.subcommands = append(parser.subcommands, new_field)
+				}
+			default:
 				if new_field, err = NewField(val, field, ARGUMENT); err != nil {
 					return
 				}
 				parser.arguments = append(parser.arguments, new_field)
-			default:
-				if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
-					return
-				}
-
-				if _, ok := parser.used_subcommand[new_field.Name]; ok {
-					err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
-					return
-				}
-				parser.used_subcommand[new_field.Name] = new_field
-				parser.subcommands = append(parser.subcommands, new_field)
 			}
-		default:
-			if new_field, err = NewField(val, field, ARGUMENT); err != nil {
-				return
-			}
-			parser.arguments = append(parser.arguments, new_field)
 		}
 	case field.Type.Kind() == reflect.Struct && field.Anonymous: // embedded field
 		log.Debug("embedded field: %T", val.Interface())
