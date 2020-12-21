@@ -20,7 +20,7 @@ func ExampleIFace() {
 	//
 	// option:
 	//          -h, --help                  show this message
-	//              --iface                 network interface
+	//              --iface IFACE           network interface
 	//
 	// argument:
 	//     IFACE                            network interface

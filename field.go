@@ -195,6 +195,8 @@ func (field *Field) setTypeHint(typ reflect.Type) {
 			field.TypeHint = TYPE_PERM
 		case time.Time:
 			field.TypeHint = TYPE_TIME
+		case net.Interface, *net.Interface:
+			field.TypeHint = TYPE_IFACE
 		}
 	}
 }

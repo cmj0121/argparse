@@ -14,6 +14,7 @@ const (
 	TYPE_STRING = "STR"
 	TYPE_PERM   = "PERM"
 	TYPE_TIME   = "TIME"
+	TYPE_IFACE  = "IFACE"
 )
 
 // default key tag and value used when parse *Struct
