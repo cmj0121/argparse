@@ -12,6 +12,7 @@ const (
 const (
 	TYPE_INT    = "INT"
 	TYPE_STRING = "STR"
+	TYPE_PERM   = "PERM"
 	TYPE_TIME   = "TIME"
 )
 
@@ -36,6 +37,6 @@ const (
 // the default formatted string config
 const (
 	FMT_MARGIN  = 4
-	FMT_PENDING = 8
+	FMT_PENDING = 9
 	FMT_SIZE    = 24
 )

@@ -1,14 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/cmj0121/argparse"
 )
 
 type Simple struct {
-	argparse.Help
+	argparse.Model
 
 	// the ignore field that will not be processed
 	Ignore bool `-`
@@ -20,10 +20,6 @@ type Simple struct {
 	Count  int    `short:"C" help:"save as the integer"`
 	Name   string `name:"user-name"`
 	Cases  string `short:"c" choices:"demo foo" help:"choice from fix possible"`
-	Now    time.Time
-
-	Optional []string  `name:"opt" help:"multiple option and save as array"`
-	Args     *[]string `help:"arbitrary argument"`
 }
 
 func main() {
@@ -34,5 +30,6 @@ func main() {
 	parser := argparse.MustNew(&c)
 	parser.Run()
 
-	fmt.Printf("%#v\n", c)
+	data, _ := json.MarshalIndent(c, "", "    ")
+	fmt.Println(string(data))
 }

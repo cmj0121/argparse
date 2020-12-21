@@ -2,6 +2,7 @@ package argparse
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"reflect"
 	"sort"
@@ -18,6 +19,16 @@ const (
 	ARGUMENT
 	SUBCOMMAND
 )
+
+func (ftyp FieldType) String() (str string) {
+	ftyps := []string{
+		"OPTION",
+		"ARGUMENT",
+		"SUB-COMMAND",
+	}
+	str = ftyps[ftyp]
+	return
+}
 
 // the field used in the argparse
 type Field struct {
@@ -52,6 +63,7 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		StructTag: sfield.Tag,
 		FieldType: ftyp,
 	}
+	log.Verbose("new field: %T (tag: `%v`) (%v)", value.Interface(), sfield.Tag, ftyp)
 
 	if field.Name = strings.ToLower(sfield.Name); field.StructTag.Get(TAG_NAME) != "" {
 		field.Name = strings.ToLower(field.StructTag.Get(TAG_NAME))
@@ -80,6 +92,9 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 			field.Subcommand.Name = strings.TrimSpace(field.Name)
 		}
 	}
+
+	// set the type hint
+	field.setTypeHint(value.Type())
 
 	if s := field.StructTag.Get(TAG_SHORTCUT); s != "" {
 		shortcut := []rune(s)
@@ -136,15 +151,40 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		typ = typ.Elem()
 	}
 
-	switch field.Value.Kind() {
-	case reflect.Int:
-		field.TypeHint = TYPE_INT
-	case reflect.String:
-		field.TypeHint = TYPE_STRING
-	default:
-		switch {
-		case field.Value.Type() == reflect.TypeOf(time.Time{}):
-			field.TypeHint = TYPE_TIME
+	// HACK - set the default setting
+	switch field.Value.Interface().(type) {
+	case os.FileMode, *os.FileMode:
+		log.Info("HACK - set the os.FileMode default settinig")
+		if field.Help == "" {
+			// set the default help message
+			field.Help = fmt.Sprintf("file perm")
+		}
+	case time.Time, *time.Time:
+		log.Info("HACK - set the time.Time default settinig")
+		if field.Help == "" {
+			// set the default help message
+			field.Help = fmt.Sprintf("timestamp RFC-3339 (2006-01-02T15:04:05+07:00)")
+		}
+	case net.Interface, *net.Interface:
+		log.Info("HACK - set the net.Interface default settinig")
+		if field.Help == "" {
+			// set the default help message
+			field.Help = "network interface"
+		}
+
+		if field.Choices == nil {
+			// enumerate all interface
+			if ifaces, err := net.Interfaces(); err == nil {
+				// set the default iface list (up)
+				field.Choices = []string{}
+
+				for _, iface := range ifaces {
+					if iface.Flags&net.FlagUp == net.FlagUp {
+						// only set the UP interface
+						field.Choices = append(field.Choices, iface.Name)
+					}
+				}
+			}
 		}
 	}
 
@@ -154,6 +194,24 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 func (field *Field) String() (str string) {
 	str = field.FormatString(4, 8, 18)
 	return
+}
+
+func (field *Field) setTypeHint(typ reflect.Type) {
+	switch typ.Kind() {
+	case reflect.Int:
+		field.TypeHint = TYPE_INT
+	case reflect.String:
+		field.TypeHint = TYPE_STRING
+	case reflect.Slice:
+		field.setTypeHint(typ.Elem())
+	default:
+		switch field.Value.Interface().(type) {
+		case os.FileMode:
+			field.TypeHint = TYPE_PERM
+		case time.Time:
+			field.TypeHint = TYPE_TIME
+		}
+	}
 }
 
 // the format string for the field
@@ -199,22 +257,19 @@ func (field *Field) FormatString(margin, pending, size int) (str string) {
 	return
 }
 
+// pre-process the field setting, include new instance
 func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err error) {
 	size = 1
 	switch kind := field.Value.Kind(); kind {
-	case reflect.Bool:
-		fallthrough
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		fallthrough
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		fallthrough
-	case reflect.String:
-		fallthrough
 	case reflect.Slice:
-		// the basic setter
-		if size, err = field.setValue(field.Value, args...); err != nil {
+		elem := reflect.New(field.Value.Type().Elem()).Elem()
+		if size, err = field.setValue(elem, args...); err != nil {
+			err = fmt.Errorf("cannot set %#v: %v", field.Value.Type(), err)
 			return
 		}
+
+		// append to the slice
+		field.Value.Set(reflect.Append(field.Value, elem))
 	case reflect.Ptr:
 		log.Debug("set pointer %v: %v", field.Name, field.Value)
 
@@ -234,29 +289,9 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 		if size, err = field.setValue(field.Value.Elem(), args...); err != nil {
 			return
 		}
-
-		// HACK - override the used args as 1
-		size = 1
 	default:
-		switch {
-		case field.Value.Type() == reflect.TypeOf(time.Time{}):
-			if len(args) == 0 {
-				err = fmt.Errorf("should pass TIME: RFC-3339 (%v)", time.RFC3339)
-				return
-			}
-
-			log.Info("set time.Time as %v", args[0])
-			var timestamp time.Time
-
-			if timestamp, err = time.Parse(time.RFC3339, args[0]); err != nil {
-				err = fmt.Errorf("should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
-				log.Info("should pass RFC-3339 (%v): %v: %v", time.RFC3339, args[0], err)
-				return
-			}
-			field.Value.Set(reflect.ValueOf(timestamp))
-		default:
-			log.Warn("not implemented set field kind: %v (%v)", kind, field.Value.Type())
-			err = fmt.Errorf("not support field: %v (%v)", field.Name, field.Value.Type())
+		// the basic setter
+		if size, err = field.setValue(field.Value, args...); err != nil {
 			return
 		}
 	}
@@ -264,7 +299,7 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 	if fn := GetCallback(parser.Value, field.Callback); fn != nil {
 		log.Debug("try execute %v", field.Callback)
 		// trigger the callback, exit when callback return true
-		if fn(parser) {
+		if fn(parser) && ExitWhenCallback {
 			log.Info("execute callback %v, and exit 0", field.Callback)
 			os.Exit(0)
 		}
@@ -279,15 +314,15 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 	return
 }
 
+// the exactly set the value to the field
 func (field *Field) setValue(value reflect.Value, args ...string) (size int, err error) {
 	log.Debug("try set value: %v (%#v)", value.Type(), args)
 
-	switch kind := value.Kind(); kind {
-	case reflect.Bool:
+	switch value.Interface().(type) {
+	case bool:
 		// toggle the boolean
 		value.SetBool(!value.Interface().(bool))
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		// override the integer
 		if len(args) == 0 {
 			err = fmt.Errorf("should pass %v", TYPE_INT)
@@ -308,7 +343,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			}
 		}
 
-		switch kind {
+		switch field.Value.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			value.SetInt(int64(val))
 		default:
@@ -316,7 +351,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 		}
 
 		size++
-	case reflect.String:
+	case string:
 		// override the string
 		if len(args) == 0 {
 			err = fmt.Errorf("should pass %v", TYPE_STRING)
@@ -333,31 +368,59 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 
 		value.SetString(args[0])
 		size++
-	case reflect.Struct:
-		// execute sub-command
-		if err = field.Subcommand.Parse(args...); err != nil {
-			// only show the help message on the sub-command
-			field.Subcommand.HelpMessage(err)
-			os.Exit(1)
-		}
-		size = len(args)
-	case reflect.Slice:
-		elem := reflect.New(value.Type().Elem()).Elem()
-		if size, err = field.setValue(elem, args...); err != nil {
-			err = fmt.Errorf("cannot set %v: %v", err, value.Type())
+	case os.FileMode:
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass file perm")
 			return
 		}
-		value.Set(reflect.Append(value, elem))
+
+		log.Info("set os.FileMode as %v", args[0])
+		var perm int
+		if perm, err = strconv.Atoi(args[0]); err != nil || uint64(perm)&uint64(0xFFFFFFFF00000000) != 0 {
+			log.Info("cannot set os.FileMode %#v: %v", args[0], err)
+			err = fmt.Errorf("cannot set os.FileMode %#v: %v", args[0], err)
+			return
+		}
+
+		field.Value.Set(reflect.ValueOf(os.FileMode(uint32(perm))))
+		size++
+	case time.Time:
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass TIME: RFC-3339 (2006-01-02T15:04:05+07:00)")
+			return
+		}
+
+		log.Info("set time.Time as %v", args[0])
+		var timestamp time.Time
+
+		if timestamp, err = time.Parse(time.RFC3339, args[0]); err != nil {
+			log.Info("should pass RFC-3339 (2006-01-02T15:04:05+07:00): %v: %v", args[0], err)
+			err = fmt.Errorf("should pass RFC-3339 (2006-01-02T15:04:05+07:00): %v: %v", args[0], err)
+			return
+		}
+		field.Value.Set(reflect.ValueOf(timestamp))
+		size++
 	default:
-		log.Warn("not implemented set value: %v", kind)
-		err = fmt.Errorf("not implemented set value: %v", kind)
-		return
+		switch value.Kind() {
+		case reflect.Struct:
+			// execute sub-command
+			if err = field.Subcommand.Parse(args...); err != nil {
+				// only show the help message on the sub-command
+				field.Subcommand.HelpMessage(err)
+				os.Exit(1)
+			}
+		default:
+			log.Warn("not implemented set value: %[1]v (%[1]T)", value.Interface())
+			err = fmt.Errorf("not implemented set value: %[1]v (%[1]T)", value.Interface())
+			return
+		}
 	}
 
 	log.Debug("success set %v (%d)", value, size)
 	return
 }
 
+// calculate the multiple-char size
 func WidecharSize(widechar string) (siz int) {
 	for _, s := range widechar {
 		siz++

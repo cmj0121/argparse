@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"reflect"
 	"testing"
 
 	"github.com/cmj0121/argparse"
@@ -10,28 +9,26 @@ import (
 
 func ExampleSimple() {
 	argparse.Stderr = os.Stdout
+	argparse.ExitWhenCallback = false
 
 	c := Simple{}
 	parser := argparse.MustNew(&c)
 	parser.Parse("-h")
 	// Output:
-	// usage: simple [OPTION] ARGS
+	// usage: simple [OPTION]
 	//
 	// option:
-	//         -h, --help                  show this message
-	//         -s, --toggle                toggle the boolean value
-	//     -C INT, --count INT             save as the integer
-	//             --user-name STR
-	//     -c STR, --cases STR             choice from fix possible [demo foo]
-	//             --now TIME
-	//             --opt                   multiple option and save as array
-	//
-	// argument:
-	//     ARGS                            arbitrary argument
+	//          -h, --help                  show this message
+	//          -v, --version               show argparse version
+	//          -s, --toggle                toggle the boolean value
+	//      -C INT, --count INT             save as the integer
+	//              --user-name STR
+	//      -c STR, --cases STR             choice from fix possible [demo foo]
 }
 
 func ExampleSimpleDefault() {
 	argparse.Stderr = os.Stdout
+	argparse.ExitWhenCallback = false
 
 	c := Simple{
 		Ignore: true,
@@ -45,19 +42,15 @@ func ExampleSimpleDefault() {
 	parser := argparse.MustNew(&c)
 	parser.Parse("-h")
 	// Output:
-	// usage: simple [OPTION] ARGS
+	// usage: simple [OPTION]
 	//
 	// option:
-	//         -h, --help                  show this message
-	//         -s, --toggle                toggle the boolean value
-	//     -C INT, --count INT             save as the integer (default: 123)
-	//             --user-name STR         (default: simple)
-	//     -c STR, --cases STR             choice from fix possible [demo foo] (default: demo)
-	//             --now TIME
-	//             --opt                   multiple option and save as array
-	//
-	// argument:
-	//     ARGS                            arbitrary argument
+	//          -h, --help                  show this message
+	//          -v, --version               show argparse version
+	//          -s, --toggle                toggle the boolean value
+	//      -C INT, --count INT             save as the integer (default: 123)
+	//              --user-name STR         (default: simple)
+	//      -c STR, --cases STR             choice from fix possible [demo foo] (default: demo)
 }
 
 func TestSimple(t *testing.T) {
@@ -90,19 +83,13 @@ func TestSimple(t *testing.T) {
 		}
 	}
 
-	if err := parser.Parse("--opt", "a"); err != nil {
-		t.Fatalf("cannot parse --opt a: %v", err)
+	if err := parser.Parse("-c", "abc"); err == nil {
+		t.Fatalf("expe t -c abc should failure")
+	} else if err := parser.Parse("-c", "foo"); err != nil {
+		t.Fatalf("cannot parse -c abc: %v", err)
 	} else {
-		if ans := []string{"a"}; !reflect.DeepEqual(ans, c.Optional) {
-			t.Errorf("parse --opt a: %#v <> %#v", ans, c.Optional)
-		}
-	}
-
-	if err := parser.Parse("--opt", "b", "--opt", "c"); err != nil {
-		t.Fatalf("cannot parse --opt a: %v", err)
-	} else {
-		if ans := []string{"a", "b", "c"}; !reflect.DeepEqual(ans, c.Optional) {
-			t.Errorf("parse --opt a: %#v <> %#v", ans, c.Optional)
+		if c.Cases != "foo" {
+			t.Errorf("parse -c foo: %v", c.Cases)
 		}
 	}
 }
