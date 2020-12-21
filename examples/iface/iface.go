@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
 
 	"github.com/cmj0121/argparse"
@@ -9,12 +11,16 @@ import (
 type IFace struct {
 	argparse.Help
 
-	//IFace1 net.Interface
-	IFace2 *net.Interface
+	IFace net.Interface
+
+	*net.Interface `name:"iface"`
 }
 
 func main() {
-	iface := IFace{}
-	parser := argparse.MustNew(&iface)
-	parser.Run()
+	c := IFace{}
+	parser := argparse.MustNew(&c)
+	if err := parser.Run(); err == nil {
+		data, _ := json.MarshalIndent(c, "", "    ")
+		fmt.Println(string(data))
+	}
 }

@@ -179,7 +179,10 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 				field.Choices = []string{}
 
 				for _, iface := range ifaces {
-					if iface.Flags&net.FlagUp == net.FlagUp {
+					switch {
+					case iface.Flags&net.FlagLoopback == net.FlagLoopback:
+						// skip loopback
+					case iface.Flags&net.FlagUp == net.FlagUp:
 						// only set the UP interface
 						field.Choices = append(field.Choices, iface.Name)
 					}
@@ -316,7 +319,7 @@ func (field *Field) SetValue(parser *ArgParse, args ...string) (size int, err er
 
 // the exactly set the value to the field
 func (field *Field) setValue(value reflect.Value, args ...string) (size int, err error) {
-	log.Debug("try set value: %v (%#v)", value.Type(), args)
+	log.Debug("try set value %[1]T (%#v)", value.Interface(), args)
 
 	switch value.Interface().(type) {
 	case bool:
@@ -382,7 +385,7 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			return
 		}
 
-		field.Value.Set(reflect.ValueOf(os.FileMode(uint32(perm))))
+		value.Set(reflect.ValueOf(os.FileMode(uint32(perm))))
 		size++
 	case time.Time:
 		if len(args) == 0 {
@@ -398,7 +401,22 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			err = fmt.Errorf("should pass RFC-3339 (2006-01-02T15:04:05+07:00): %v: %v", args[0], err)
 			return
 		}
-		field.Value.Set(reflect.ValueOf(timestamp))
+		value.Set(reflect.ValueOf(timestamp))
+		size++
+	case net.Interface:
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass IFACE")
+			return
+		}
+
+		var iface *net.Interface
+
+		if iface, err = net.InterfaceByName(args[0]); err != nil {
+			err = fmt.Errorf("invalid IFACE %#v: %v", args[0], err)
+			return
+		}
+
+		value.Set(reflect.ValueOf(*iface))
 		size++
 	default:
 		switch value.Kind() {

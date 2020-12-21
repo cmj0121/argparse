@@ -69,3 +69,9 @@ when no valid callback found.
 ## Inner Log sub-system ##
 The `Log` is the sub-system in the argparse which provide the simple logging system. It can be change the log
 level by pass the environment *LOG_LEVEL* and change the level, and you can override the logger by `SetLogger`.
+
+
+## specified Type ##
+- os.FileMode
+- time.Time
+- net.Interface
