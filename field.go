@@ -171,24 +171,6 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 			// set the default help message
 			field.Help = "network interface"
 		}
-
-		if field.Choices == nil {
-			// enumerate all interface
-			if ifaces, err := net.Interfaces(); err == nil {
-				// set the default iface list (up)
-				field.Choices = []string{}
-
-				for _, iface := range ifaces {
-					switch {
-					case iface.Flags&net.FlagLoopback == net.FlagLoopback:
-						// skip loopback
-					case iface.Flags&net.FlagUp == net.FlagUp:
-						// only set the UP interface
-						field.Choices = append(field.Choices, iface.Name)
-					}
-				}
-			}
-		}
 	}
 
 	return
