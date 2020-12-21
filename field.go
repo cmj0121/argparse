@@ -197,6 +197,10 @@ func (field *Field) setTypeHint(typ reflect.Type) {
 			field.TypeHint = TYPE_TIME
 		case net.Interface, *net.Interface:
 			field.TypeHint = TYPE_IFACE
+		case net.IP, *net.IP:
+			field.TypeHint = TYPE_IP
+		case net.IPNet, *net.IPNet:
+			field.TypeHint = TYPE_CIDR
 		}
 	}
 }
@@ -370,6 +374,35 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 		}
 
 		value.Set(reflect.ValueOf(*iface))
+		size++
+	case net.IP:
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass IP")
+			return
+		}
+
+		ip := net.ParseIP(args[0])
+		if ip == nil {
+			err = fmt.Errorf("invalid IP: %v", args[0])
+			return
+		}
+
+		value.Set(reflect.ValueOf(ip))
+		size++
+	case net.IPNet:
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass CIDR")
+			return
+		}
+
+		var inet *net.IPNet
+		_, inet, err = net.ParseCIDR(args[0])
+		if err != nil {
+			err = fmt.Errorf("invalid CIDR: %v", args[0])
+			return
+		}
+
+		value.Set(reflect.ValueOf(*inet))
 		size++
 	default:
 		switch value.Kind() {

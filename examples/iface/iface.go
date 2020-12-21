@@ -12,6 +12,8 @@ type IFace struct {
 	argparse.Help
 
 	IFace *net.Interface `args:"option"`
+	IP    net.IP         `help:"IP address"`
+	INet  net.IPNet      `help:"IP with mask"`
 
 	*net.Interface `name:"iface"`
 }

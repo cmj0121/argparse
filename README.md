@@ -36,12 +36,13 @@ is implemented in the `field.setValue`:
 ### Syntax-Sugar ###
 The argparse supports few types that can be easily parse and used in the command-line.
 
-| type          | hint  | description                         |
-|---------------|-------|-------------------------------------|
-| os.FileMode   | PERM  | the file permission in the system   |
-| time.Time     | TIME  | the timestamp noted by the RFC-3339 |
-| net.Interface | IFACE | the interface in the system         |
-
+| type          | hint  | description                           |
+|---------------|-------|---------------------------------------|
+| os.FileMode   | PERM  | the file permission in the system     |
+| time.Time     | TIME  | the timestamp noted by the RFC-3339   |
+| net.Interface | IFACE | the interface in the system           |
+| net.IP        | IP    | the IP format string                  |
+| net.IPNet     | CIDR  | the IP with mask (CIDR) format string |
 
 ### tags ###
 There are few tags use for the customized field setting

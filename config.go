@@ -15,6 +15,8 @@ const (
 	TYPE_PERM   = "PERM"
 	TYPE_TIME   = "TIME"
 	TYPE_IFACE  = "IFACE"
+	TYPE_IP     = "IP"
+	TYPE_CIDR   = "CIDR"
 )
 
 // default key tag and value used when parse *Struct
