@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -395,32 +396,10 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			return
 		}
 
-		var inet *net.IPNet
-
-		_, inet, err = net.ParseCIDR(args[0])
-		if err != nil {
-			ip := field.getIP(args[0])
-
-			if ip == nil {
-				err = fmt.Errorf("invalid CIDR: %#v", args[0])
-				return
-			}
-
-			err = nil
-			switch {
-			case ip.To4() != nil:
-				inet = &net.IPNet{
-					IP:   ip,
-					Mask: net.CIDRMask(32, 32),
-				}
-			case ip.To16() != nil:
-				inet = &net.IPNet{
-					IP:   ip,
-					Mask: net.CIDRMask(128, 128),
-				}
-			default:
-				err = fmt.Errorf("invalid CIDR: %#v", args[0])
-			}
+		inet := field.getCIRD(args[0])
+		if inet == nil {
+			err = fmt.Errorf("invalid CIDR: %#v", args[0])
+			return
 		}
 
 		value.Set(reflect.ValueOf(*inet))
@@ -485,6 +464,71 @@ func (field *Field) getIP(in string) (ip net.IP) {
 		}
 
 		ip = ips[0]
+	}
+
+	return
+}
+
+func (field *Field) getCIRD(in string) (inet *net.IPNet) {
+	var err error
+
+	_, inet, err = net.ParseCIDR(in)
+	if err != nil {
+		var ip net.IP
+		re := regexp.MustCompile(`^(.*)/(\d+)$`)
+
+		switch {
+		case re.MatchString(in):
+			pattern := re.FindStringSubmatch(in)
+			if ip = field.getIP(pattern[1]); ip == nil {
+				// invalid CIRD
+				return
+			}
+
+			var mask int
+			mask, err = strconv.Atoi(pattern[2])
+			if err != nil || mask < 0 {
+				// invalid CIRD
+				return
+			}
+
+			switch {
+			case ip.To4() != nil:
+				inet = &net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(mask, 32),
+				}
+			case ip.To16() != nil:
+				inet = &net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(mask, 128),
+				}
+			default:
+				// invalid CIRD
+				return
+			}
+		default:
+			if ip = field.getIP(in); ip == nil {
+				// invalid CIRD
+				return
+			}
+
+			switch {
+			case ip.To4() != nil:
+				inet = &net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(32, 32),
+				}
+			case ip.To16() != nil:
+				inet = &net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(128, 128),
+				}
+			default:
+				// invalid CIRD
+				return
+			}
+		}
 	}
 
 	return

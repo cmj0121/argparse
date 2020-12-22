@@ -51,4 +51,8 @@ func TestIFace(t *testing.T) {
 	if err := parser.Parse("--inet", "github.com"); err != nil {
 		t.Fatalf("cannot parse --inet github.com: %v", err)
 	}
+
+	if err := parser.Parse("--inet", "github.com/16"); err != nil {
+		t.Fatalf("cannot parse --inet github.com/16: %v", err)
+	}
 }
