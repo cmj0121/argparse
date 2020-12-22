@@ -40,7 +40,15 @@ func TestIFace(t *testing.T) {
 		t.Fatalf("cannot parse --ip 127.0.0.1: %v", err)
 	}
 
+	if err := parser.Parse("--ip", "github.com"); err != nil {
+		t.Fatalf("cannot parse --ip github.com: %v", err)
+	}
+
 	if err := parser.Parse("--inet", "192.168.1.2/24"); err != nil {
 		t.Fatalf("cannot parse --inet 192.168.1.2/24: %v", err)
+	}
+
+	if err := parser.Parse("--inet", "github.com"); err != nil {
+		t.Fatalf("cannot parse --inet github.com: %v", err)
 	}
 }

@@ -381,9 +381,9 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 			return
 		}
 
-		ip := net.ParseIP(args[0])
+		ip := field.getIP(args[0])
 		if ip == nil {
-			err = fmt.Errorf("invalid IP: %v", args[0])
+			err = fmt.Errorf("invalid IP: %#v", args[0])
 			return
 		}
 
@@ -396,10 +396,31 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 		}
 
 		var inet *net.IPNet
+
 		_, inet, err = net.ParseCIDR(args[0])
 		if err != nil {
-			err = fmt.Errorf("invalid CIDR: %v", args[0])
-			return
+			ip := field.getIP(args[0])
+
+			if ip == nil {
+				err = fmt.Errorf("invalid CIDR: %#v", args[0])
+				return
+			}
+
+			err = nil
+			switch {
+			case ip.To4() != nil:
+				inet = &net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(32, 32),
+				}
+			case ip.To16() != nil:
+				inet = &net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(128, 128),
+				}
+			default:
+				err = fmt.Errorf("invalid CIDR: %#v", args[0])
+			}
 		}
 
 		value.Set(reflect.ValueOf(*inet))
@@ -449,6 +470,23 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 	}
 
 	log.Debug("success set %v (%d)", value, size)
+	return
+}
+
+func (field *Field) getIP(in string) (ip net.IP) {
+	ip = net.ParseIP(in)
+
+	if ip == nil {
+		// try get by hostname
+		log.Debug("search IP by LookupIP: %v", in)
+		ips, err := net.LookupIP(in)
+		if err != nil || len(ips) == 0 {
+			return
+		}
+
+		ip = ips[0]
+	}
+
 	return
 }
 
