@@ -15,6 +15,8 @@ type Simple struct {
 	ignore bool
 	_      [8]byte `pending byte`
 
+	CustomizedIgnore bool `args:"-"`
+
 	// the option can be set repeatedly by-default
 	Switch bool   `short:"s" name:"toggle" help:"toggle the boolean value"`
 	Count  int    `short:"C" help:"save as the integer"`

@@ -95,14 +95,89 @@ type ArgParse struct {
 func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (err error) {
 	var new_field *Field
 
-	log.Debug("try set field: %v (%v)", val, val.Type())
-	switch {
-	case field.Type.Kind() == reflect.Ptr: // argument or sub-command
-		log.Debug("argument or sub-command: %v", field.Type.Elem().Kind())
+	log.Debug("try set field: %v (%v) (%v)", val, val.Type(), field.Tag)
 
-		switch field.Tag.Get(TAG_RESERVED_KEY) {
-		case TAG_OPTION:
-			log.Info("force set as option: %[1]T", val.Interface())
+	switch field.Tag.Get(TAG_RESERVED_KEY) {
+	case TAG_IGNORE:
+		log.Info("skip field: %v (%v)", val, field.Tag)
+		return
+	default:
+		switch {
+		case field.Type.Kind() == reflect.Ptr: // argument or sub-command
+			log.Debug("argument or sub-command: %v", field.Type.Elem().Kind())
+
+			switch field.Tag.Get(TAG_RESERVED_KEY) {
+			case TAG_OPTION:
+				log.Info("force set as option: %[1]T", val.Interface())
+				if new_field, err = NewField(val, field, OPTION); err != nil {
+					return
+				}
+
+				if _, ok := parser.used_option["--"+new_field.Name]; ok {
+					err = fmt.Errorf("duplicated option --%v", new_field.Name)
+					return
+				}
+				parser.used_option["--"+new_field.Name] = new_field
+
+				if new_field.Shortcut != rune(0) {
+					if _, ok := parser.used_option["-"+string(new_field.Shortcut)]; ok {
+						err = fmt.Errorf("duplicated option -%v", string(new_field.Shortcut))
+						return
+					}
+					parser.used_option["-"+string(new_field.Shortcut)] = new_field
+				}
+
+				parser.options = append(parser.options, new_field)
+			default:
+				switch field.Type.Elem().Kind() {
+				case reflect.Struct:
+					switch val.Interface().(type) {
+					case *net.Interface:
+						if new_field, err = NewField(val, field, ARGUMENT); err != nil {
+							return
+						}
+						parser.arguments = append(parser.arguments, new_field)
+					default:
+						if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
+							return
+						}
+
+						if _, ok := parser.used_subcommand[new_field.Name]; ok {
+							err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
+							return
+						}
+						parser.used_subcommand[new_field.Name] = new_field
+						parser.subcommands = append(parser.subcommands, new_field)
+					}
+				default:
+					if new_field, err = NewField(val, field, ARGUMENT); err != nil {
+						return
+					}
+					parser.arguments = append(parser.arguments, new_field)
+				}
+			}
+		case field.Type.Kind() == reflect.Struct && field.Anonymous: // embedded field
+			log.Debug("embedded field: %T", val.Interface())
+
+			switch val.Interface().(type) {
+			default:
+				for idx := 0; idx < field.Type.NumField(); idx++ {
+					v := val.Field(idx)
+
+					sub_field := field.Type.Field(idx)
+					if !v.CanSet() || strings.TrimSpace(string(sub_field.Tag)) == TAG_IGNORE {
+						// the field will not be processed, skip
+						log.Info("#%-2d field %v.%v skip", idx, field.Name, sub_field.Name)
+						continue
+					}
+
+					if err = parser.setField(v, sub_field); err != nil {
+						err = fmt.Errorf("set %v.%v: %v", field.Name, sub_field.Name, err)
+						return
+					}
+				}
+			}
+		default:
 			if new_field, err = NewField(val, field, OPTION); err != nil {
 				return
 			}
@@ -122,75 +197,7 @@ func (parser *ArgParse) setField(val reflect.Value, field reflect.StructField) (
 			}
 
 			parser.options = append(parser.options, new_field)
-		default:
-			switch field.Type.Elem().Kind() {
-			case reflect.Struct:
-				switch val.Interface().(type) {
-				case *net.Interface:
-					if new_field, err = NewField(val, field, ARGUMENT); err != nil {
-						return
-					}
-					parser.arguments = append(parser.arguments, new_field)
-				default:
-					if new_field, err = NewField(val, field, SUBCOMMAND); err != nil {
-						return
-					}
-
-					if _, ok := parser.used_subcommand[new_field.Name]; ok {
-						err = fmt.Errorf("duplicated subcommands %v", new_field.Name)
-						return
-					}
-					parser.used_subcommand[new_field.Name] = new_field
-					parser.subcommands = append(parser.subcommands, new_field)
-				}
-			default:
-				if new_field, err = NewField(val, field, ARGUMENT); err != nil {
-					return
-				}
-				parser.arguments = append(parser.arguments, new_field)
-			}
 		}
-	case field.Type.Kind() == reflect.Struct && field.Anonymous: // embedded field
-		log.Debug("embedded field: %T", val.Interface())
-
-		switch val.Interface().(type) {
-		default:
-			for idx := 0; idx < field.Type.NumField(); idx++ {
-				v := val.Field(idx)
-
-				sub_field := field.Type.Field(idx)
-				if !v.CanSet() || strings.TrimSpace(string(sub_field.Tag)) == TAG_IGNORE {
-					// the field will not be processed, skip
-					log.Info("#%-2d field %v.%v skip", idx, field.Name, sub_field.Name)
-					continue
-				}
-
-				if err = parser.setField(v, sub_field); err != nil {
-					err = fmt.Errorf("set %v.%v: %v", field.Name, sub_field.Name, err)
-					return
-				}
-			}
-		}
-	default:
-		if new_field, err = NewField(val, field, OPTION); err != nil {
-			return
-		}
-
-		if _, ok := parser.used_option["--"+new_field.Name]; ok {
-			err = fmt.Errorf("duplicated option --%v", new_field.Name)
-			return
-		}
-		parser.used_option["--"+new_field.Name] = new_field
-
-		if new_field.Shortcut != rune(0) {
-			if _, ok := parser.used_option["-"+string(new_field.Shortcut)]; ok {
-				err = fmt.Errorf("duplicated option -%v", string(new_field.Shortcut))
-				return
-			}
-			parser.used_option["-"+string(new_field.Shortcut)] = new_field
-		}
-
-		parser.options = append(parser.options, new_field)
 	}
 
 	if new_field != nil && new_field.Callback != "" && GetCallback(parser.Value, new_field.Callback) == nil {

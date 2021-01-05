@@ -3,9 +3,10 @@ package argparse
 // the general version info
 const (
 	PROJ_NAME = "argparse"
-	MAJOR     = 0
-	MINOR     = 6
-	MACRO     = 1
+
+	MAJOR = 0
+	MINOR = 6
+	MACRO = 1
 )
 
 // type hint of the field
