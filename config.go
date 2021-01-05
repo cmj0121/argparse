@@ -33,6 +33,8 @@ const (
 	TAG_CALLBACK    = "callback"
 	TAG_CHOICES     = "choices"
 	TAG_CHOICES_SEP = " "
+
+	TAG_DEFAULT_KEY = "default"
 	// the reserved key used in TAG_KEY
 	KEY_PASSWORD = "password"
 	// default callback KEY

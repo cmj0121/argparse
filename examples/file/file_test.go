@@ -20,7 +20,7 @@ func ExampleFile() {
 	// option:
 	//          -h, --help                  show this message
 	//          -v, --version               show argparse version
-	//     -m PERM, --filemode PERM         file perm
+	//     -m PERM, --filemode PERM         file perm (default: --wxrw--wx)
 	//     -c TIME, --created_at TIME       timestamp RFC-3339 (2006-01-02T15:04:05+07:00)
 	//      -p STR, --path STR              file path list
 	//

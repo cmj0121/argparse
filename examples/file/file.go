@@ -16,7 +16,7 @@ type FileAction struct {
 type File struct {
 	argparse.Model
 
-	os.FileMode `short:"m"`
+	os.FileMode `short:"m" default:"755"`
 	CreatedAt   time.Time `short:"c" name:"created_at"`
 	Path        []string  `short:"p" name:"path" help:"file path list"`
 

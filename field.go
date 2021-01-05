@@ -114,6 +114,14 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		field.Help = help
 	}
 
+	if defaultV := field.StructTag.Get(TAG_DEFAULT_KEY); defaultV != "" {
+		log.Info("try set default value: %v", defaultV)
+		if _, err = field.setValue(field.Value, defaultV); err != nil {
+			log.Warn("cannot set default value %#v: %v", defaultV, err)
+			return
+		}
+	}
+
 	if callback := field.StructTag.Get(TAG_CALLBACK); callback != "" {
 		// set the callback name
 		field.Callback = callback
@@ -127,6 +135,8 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		default:
 			field.DefaultValue = field.Value.Interface()
 		}
+
+		log.Debug("set default: %#v", field.DefaultValue)
 	}
 
 	if c := field.StructTag.Get(TAG_CHOICES); c != "" {
