@@ -127,18 +127,6 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 		field.Callback = callback
 	}
 
-	if field.Value.IsValid() && !field.Value.IsZero() {
-		switch field.FieldType {
-		case SUBCOMMAND:
-		case ARGUMENT:
-			field.DefaultValue = field.Value.Elem().Interface()
-		default:
-			field.DefaultValue = field.Value.Interface()
-		}
-
-		log.Debug("set default: %#v", field.DefaultValue)
-	}
-
 	if c := field.StructTag.Get(TAG_CHOICES); c != "" {
 		field.Choices = []string{}
 		for _, choice := range strings.Split(c, TAG_CHOICES_SEP) {
@@ -155,6 +143,18 @@ func NewField(value reflect.Value, sfield reflect.StructField, ftyp FieldType) (
 				return
 			}
 		}
+	}
+
+	if field.Value.IsValid() && !field.Value.IsZero() {
+		switch field.FieldType {
+		case SUBCOMMAND:
+		case ARGUMENT:
+			field.DefaultValue = field.Value.Elem().Interface()
+		default:
+			field.DefaultValue = field.Value.Interface()
+		}
+
+		log.Debug("set default: %#v", field.DefaultValue)
 	}
 
 	typ := field.Type
