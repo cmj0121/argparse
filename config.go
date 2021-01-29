@@ -6,7 +6,7 @@ const (
 
 	MAJOR = 0
 	MINOR = 6
-	MACRO = 3
+	MACRO = 4
 )
 
 // type hint of the field
