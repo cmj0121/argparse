@@ -10,7 +10,10 @@ import (
 )
 
 type FileAction struct {
-	Action *string
+	argparse.Help
+
+	*os.File `args:"option" help:"open file"`
+	Action   *string
 }
 
 type File struct {

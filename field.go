@@ -339,6 +339,20 @@ func (field *Field) setValue(value reflect.Value, args ...string) (size int, err
 
 		value.SetString(args[0])
 		size++
+	case *os.File:
+		if len(args) == 0 {
+			err = fmt.Errorf("should pass filename")
+			return
+		}
+
+		log.Info("open file %#v", args[0])
+
+		var f *os.File
+		if f, err = os.Open(args[0]); err == nil {
+			value.Set(reflect.ValueOf(f))
+			size++
+		}
+		return
 	case os.FileMode:
 		if len(args) == 0 {
 			err = fmt.Errorf("should pass file perm")
