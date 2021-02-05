@@ -212,6 +212,8 @@ func (field *Field) setTypeHint(typ reflect.Type) {
 			field.TypeHint = TYPE_IP
 		case net.IPNet, *net.IPNet:
 			field.TypeHint = TYPE_CIDR
+		case *os.File, os.File:
+			field.TypeHint = TYPE_FILE
 		}
 	}
 }

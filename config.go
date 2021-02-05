@@ -6,7 +6,7 @@ const (
 
 	MAJOR = 0
 	MINOR = 6
-	MACRO = 5
+	MACRO = 6
 )
 
 // type hint of the field
@@ -18,6 +18,7 @@ const (
 	TYPE_IFACE  = "IFACE"
 	TYPE_IP     = "IP"
 	TYPE_CIDR   = "CIDR"
+	TYPE_FILE   = "FILE"
 )
 
 // default key tag and value used when parse *Struct
